@@ -873,7 +873,7 @@
             <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 20px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Búsqueda y Filtros Rápidos</h3>
             <div class="search-grid">
                 <div class="form-group">
-                    <label for="search-bautizado">Bautizado (Nombre, Apellido o Cédula)</label>
+                    <label for="search-bautizado">Bautizado (Nombre o Apellido)</label>
                     <input type="text" id="search-bautizado" class="form-control" placeholder="Ej: Juan Pérez">
                 </div>
                 <div class="form-group">
@@ -912,7 +912,6 @@
                         <tr>
                             <th>Libro / Pág / Acta</th>
                             <th>Bautizado</th>
-                            <th>Cédula</th>
                             <th>F. Bautizo</th>
                             <th>Padres</th>
                             <th>Ministro</th>
@@ -921,7 +920,7 @@
                     </thead>
                     <tbody id="actas-tbody">
                         <tr>
-                            <td colspan="7" class="no-data">
+                            <td colspan="6" class="no-data">
                                 <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
                                 <p>Buscando actas registradas...</p>
                             </td>
@@ -954,7 +953,6 @@
 
                         <h4 class="form-section-title">Datos del Bautizado</h4>
                         <div class="detail-row"><span class="detail-label">Nombre Completo:</span><span class="detail-value" id="d-nombre" style="font-weight: 700; color: var(--accent-color);">-</span></div>
-                        <div class="detail-row"><span class="detail-label">Cédula:</span><span class="detail-value" id="d-cedula">-</span></div>
                         <div class="detail-row"><span class="detail-label">Fecha Nacimiento:</span><span class="detail-value" id="d-fecha-nacimiento">-</span></div>
                         <div class="detail-row"><span class="detail-label">Género:</span><span class="detail-value" id="d-genero">-</span></div>
 
@@ -1033,11 +1031,7 @@
                         </div>
                     </div>
                     
-                    <div class="grid-3" style="margin-top: 15px;">
-                        <div class="form-group">
-                            <label for="f-bautizado-cedula">Cédula / Identificación</label>
-                            <input type="text" id="f-bautizado-cedula" name="bautizado[cedula]" class="form-control" placeholder="Ej: V-25123456">
-                        </div>
+                    <div class="grid-2" style="margin-top: 15px;">
                         <div class="form-group">
                             <label for="f-bautizado-fecha_nacimiento">Fecha de Nacimiento</label>
                             <input type="date" id="f-bautizado-fecha_nacimiento" name="bautizado[fecha_nacimiento]" class="form-control">
@@ -1351,7 +1345,6 @@
                             <strong>${acta.bautizado.nombres} ${acta.bautizado.apellidos}</strong>
                         </div>
                     </td>
-                    <td>${acta.bautizado.cedula || '<span style="color:var(--text-secondary)">S/C</span>'}</td>
                     <td>${formatDate(acta.fecha_bautizo)}</td>
                     <td style="font-size:0.85rem; color:var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                         ${padres}
@@ -1423,7 +1416,6 @@
             document.getElementById('d-ministro').textContent = acta.ministro;
             
             document.getElementById('d-nombre').textContent = `${acta.bautizado.nombres} ${acta.bautizado.apellidos}`;
-            document.getElementById('d-cedula').textContent = acta.bautizado.cedula || 'Sin Cédula Registrada';
             document.getElementById('d-fecha-nacimiento').textContent = acta.bautizado.fecha_nacimiento ? formatDate(acta.bautizado.fecha_nacimiento) : '-';
             document.getElementById('d-genero').textContent = acta.bautizado.genero === 'M' ? 'Masculino (M)' : 'Femenino (F)';
 

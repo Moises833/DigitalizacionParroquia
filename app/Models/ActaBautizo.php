@@ -111,8 +111,7 @@ class ActaBautizo extends Model
         return $query->whereHas('bautizado', function ($q) use ($search) {
             $q->where(function ($sub) use ($search) {
                 $sub->where('nombres', 'like', "%{$search}%")
-                    ->orWhere('apellidos', 'like', "%{$search}%")
-                    ->orWhere('cedula', 'like', "%{$search}%");
+                    ->orWhere('apellidos', 'like', "%{$search}%");
             });
         });
     }

@@ -49,9 +49,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 3. Crear personas ficticias para un acta de bautizo de demostración
-        $bautizado = \App\Models\Persona::firstOrCreate(['cedula' => 'V-30123456'], [
+        $bautizado = \App\Models\Persona::firstOrCreate([
             'nombres' => 'Manuel Alejandro',
             'apellidos' => 'Rodríguez Castillo',
+        ], [
+            'cedula' => null,
             'fecha_nacimiento' => '1998-05-15',
             'genero' => 'M'
         ]);
@@ -101,9 +103,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Segundo ejemplo de demostración
-        $bautizado2 = \App\Models\Persona::firstOrCreate(['cedula' => 'V-29456789'], [
+        $bautizado2 = \App\Models\Persona::firstOrCreate([
             'nombres' => 'Sofía Valentina',
             'apellidos' => 'Mendoza Silva',
+        ], [
+            'cedula' => null,
             'fecha_nacimiento' => '2001-09-08',
             'genero' => 'F'
         ]);

@@ -39,7 +39,7 @@ class ActaBautizoController extends Controller
         // causaría un cuello de botella fatal. Con with() se realizan únicamente 6 queries optimizadas en total.
         $actas = ActaBautizo::query()
             ->with([
-                'bautizado:id,nombres,apellidos,cedula,fecha_nacimiento,genero',
+                'bautizado:id,nombres,apellidos,fecha_nacimiento,genero',
                 'padre:id,nombres,apellidos',
                 'madre:id,nombres,apellidos',
                 'padrino:id,nombres,apellidos',
@@ -78,7 +78,6 @@ class ActaBautizoController extends Controller
             // Datos del bautizado
             'bautizado.nombres'          => 'required|string|max:100',
             'bautizado.apellidos'        => 'required|string|max:100',
-            'bautizado.cedula'           => 'nullable|string|max:20|unique:personas,cedula',
             'bautizado.fecha_nacimiento' => 'nullable|date|before_or_equal:fecha_bautizo',
             'bautizado.genero'           => 'required|in:M,F',
 
@@ -119,7 +118,6 @@ class ActaBautizoController extends Controller
             $bautizado = Persona::create([
                 'nombres'          => $validated['bautizado']['nombres'],
                 'apellidos'        => $validated['bautizado']['apellidos'],
-                'cedula'           => $validated['bautizado']['cedula'] ?? null,
                 'fecha_nacimiento' => $validated['bautizado']['fecha_nacimiento'] ?? null,
                 'genero'           => $validated['bautizado']['genero'],
             ]);
