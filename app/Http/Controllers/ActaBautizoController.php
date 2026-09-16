@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ActaBautizo;
 use App\Models\Persona;
+use App\Services\GeminiTranscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -276,5 +277,19 @@ class ActaBautizoController extends Controller
             'cedula'    => $datosPersona['cedula'] ?? null,
             'genero'    => $genero,
         ]);
+    }
+
+    /**
+     * Transcribir una imagen de página manuscrita usando IA (Gemini Vision API).
+     */
+    public function transcribirImagen(Request $request, GeminiTranscriptionService $transcriber): JsonResponse
+    {
+        $request->validate([
+            'imagen_pagina' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
+        ]);
+
+        $result = $transcriber->transcribir($request->file('imagen_pagina'));
+
+        return response()->json($result);
     }
 }

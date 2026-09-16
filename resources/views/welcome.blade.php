@@ -988,6 +988,26 @@
             </div>
             <form id="add-acta-form" enctype="multipart/form-data">
                 <div class="modal-body">
+                    <!-- Banner Asistente IA -->
+                    <div class="ai-transcribe-box" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 12px; padding: 16px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);">
+                                    ✨
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.98rem; font-weight: 700; color: var(--text-primary);">Asistente de Transcripción IA (Letra Cursiva)</h4>
+                                    <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: var(--text-secondary);">Selecciona o arrastra la foto del folio manuscrito para auto-completar los campos con Inteligencia Artificial.</p>
+                                </div>
+                            </div>
+                            <button type="button" class="btn" id="btn-ai-transcribe" style="background: linear-gradient(135deg, #6366f1, #a855f7); border: none; color: white; font-weight: 600; padding: 9px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+                                <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+                                <span>Auto-Transcribir con IA</span>
+                            </button>
+                        </div>
+                        <div id="ai-status-msg" style="display: none; font-size: 0.85rem; padding: 10px 14px; border-radius: 8px; font-weight: 500;"></div>
+                    </div>
+
                     <!-- Sección 1: Libro -->
                     <h4 class="form-section-title">1. Ubicación en Libro Físico</h4>
                     <div class="grid-3">
@@ -1149,6 +1169,7 @@
             // Configuración de eventos de los modales
             document.getElementById('openRegisterModal').addEventListener('click', () => openModal('registerModal'));
             document.getElementById('btn-search').addEventListener('click', () => fetchActas());
+            document.getElementById('btn-ai-transcribe').addEventListener('click', handleAITranscription);
 
             // Drag and Drop Zone handler
             const fileInput = document.getElementById('f-imagen_pagina');
@@ -1491,6 +1512,112 @@
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Guardar Registro';
+            });
+        }
+
+        // Manejo de Transcripción con IA de imágenes manuscritas
+        function handleAITranscription() {
+            const fileInput = document.getElementById('f-imagen_pagina');
+            const btn = document.getElementById('btn-ai-transcribe');
+            const statusMsg = document.getElementById('ai-status-msg');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                showToast('Por favor selecciona o arrastra primero la imagen de la página en la sección 5.', 'error');
+                const dragZone = document.getElementById('drag-zone');
+                if (dragZone) {
+                    dragZone.scrollIntoView({ behavior: 'smooth' });
+                    dragZone.style.borderColor = 'var(--accent-color)';
+                    setTimeout(() => dragZone.style.borderColor = '', 2000);
+                }
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('imagen_pagina', fileInput.files[0]);
+
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
+                <span>Analizando caligrafía...</span>
+            `;
+
+            statusMsg.style.display = 'block';
+            statusMsg.style.background = 'rgba(99, 102, 241, 0.15)';
+            statusMsg.style.color = '#818cf8';
+            statusMsg.textContent = '🧠 Analizando trazos de letra cursiva manuscrita con Visión por IA...';
+
+            fetch('/api/actas/transcribir-imagen', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if (!resData.success || !resData.data) {
+                    throw new Error(resData.message || 'No se logró transcribir la imagen.');
+                }
+
+                const d = resData.data;
+
+                // Auto-llenar campos del formulario
+                if (d.numero_pagina) document.getElementById('f-numero_pagina').value = d.numero_pagina;
+                if (d.numero_acta) document.getElementById('f-numero_acta').value = d.numero_acta;
+                if (d.fecha_bautizo) document.getElementById('f-fecha_bautizo').value = d.fecha_bautizo;
+                if (d.ministro) document.getElementById('f-ministro').value = d.ministro;
+
+                if (d.bautizado) {
+                    if (d.bautizado.nombres) document.getElementById('f-bautizado-nombres').value = d.bautizado.nombres;
+                    if (d.bautizado.apellidos) document.getElementById('f-bautizado-apellidos').value = d.bautizado.apellidos;
+                    if (d.bautizado.fecha_nacimiento) document.getElementById('f-bautizado-fecha_nacimiento').value = d.bautizado.fecha_nacimiento;
+                    if (d.bautizado.genero) document.getElementById('f-bautizado-genero').value = d.bautizado.genero;
+                }
+
+                if (d.padre) {
+                    if (d.padre.nombres) document.querySelector('input[name="padre[nombres]"]').value = d.padre.nombres;
+                    if (d.padre.apellidos) document.querySelector('input[name="padre[apellidos]"]').value = d.padre.apellidos;
+                    if (d.padre.cedula) document.querySelector('input[name="padre[cedula]"]').value = d.padre.cedula;
+                }
+
+                if (d.madre) {
+                    if (d.madre.nombres) document.querySelector('input[name="madre[nombres]"]').value = d.madre.nombres;
+                    if (d.madre.apellidos) document.querySelector('input[name="madre[apellidos]"]').value = d.madre.apellidos;
+                    if (d.madre.cedula) document.querySelector('input[name="madre[cedula]"]').value = d.madre.cedula;
+                }
+
+                if (d.padrino) {
+                    if (d.padrino.nombres) document.querySelector('input[name="padrino[nombres]"]').value = d.padrino.nombres;
+                    if (d.padrino.apellidos) document.querySelector('input[name="padrino[apellidos]"]').value = d.padrino.apellidos;
+                }
+
+                if (d.madrina) {
+                    if (d.madrina.nombres) document.querySelector('input[name="madrina[nombres]"]').value = d.madrina.nombres;
+                    if (d.madrina.apellidos) document.querySelector('input[name="madrina[apellidos]"]').value = d.madrina.apellidos;
+                }
+
+                if (d.notas_marginales) {
+                    const notasInput = document.querySelector('textarea[name="notas_marginales"]');
+                    if (notasInput) notasInput.value = d.notas_marginales;
+                }
+
+                statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
+                statusMsg.style.color = '#4ade80';
+                statusMsg.textContent = '✨ ¡Campos auto-completados por IA con éxito! Revisa la información extraída antes de guardar.';
+                
+                showToast('Transcripción completada por IA. Revisa y confirma los campos.');
+            })
+            .catch(err => {
+                console.error(err);
+                statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusMsg.style.color = '#f87171';
+                statusMsg.textContent = '⚠️ Error en transcripción: ' + (err.message || 'No se pudo procesar la imagen.');
+                showToast('Error al transcribir la imagen.', 'error');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+                    <span>Auto-Transcribir con IA</span>
+                `;
             });
         }
 

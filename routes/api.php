@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/actas', [\App\Http\Controllers\ActaBautizoController::class, 'index']);
 Route::post('/actas', [\App\Http\Controllers\ActaBautizoController::class, 'store']);
+Route::post('/actas/transcribir-imagen', [\App\Http\Controllers\ActaBautizoController::class, 'transcribirImagen']);
 Route::get('/libros', function () {
     return response()->json(\App\Models\Libro::all(['id', 'numero_libro']));
 });
