@@ -784,15 +784,35 @@
             fill: var(--text-primary);
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .grid-2, .grid-3, .detail-grid {
-                grid-template-columns: 1fr;
+        /* Estilos de Impresión para Certificado */
+        @media print {
+            body * {
+                visibility: hidden;
             }
-            header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
+            #printable-certificate, #printable-certificate * {
+                visibility: visible;
+            }
+            #printable-certificate {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                border: 4px double #1e3a8a !important;
+                background: white !important;
+                color: #0f172a !important;
+                padding: 40px !important;
+                box-sizing: border-box;
+                z-index: 99999;
+            }
+            .modal-overlay, .modal-container {
+                background: none !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .modal-header, .modal-footer, header, main, .toast-container {
+                display: none !important;
             }
         }
     </style>
@@ -981,8 +1001,113 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                 <button class="btn btn-secondary" onclick="closeModal('detailModal')">Cerrar</button>
+                <button class="btn" onclick="openCertificateModal()" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; display: inline-flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" fill="white" viewBox="0 0 24 24">
+                        <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+                    </svg>
+                    <span>Imprimir Certificado</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Certificado de Bautismo (Vista previa e impresión) -->
+    <div class="modal-overlay" id="certificateModal">
+        <div class="modal-container" style="max-width: 800px; padding: 25px; background: white; color: #1e293b;">
+            <div class="modal-header" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color: #0f172a;">Certificado Oficial de Bautismo</h3>
+                <button class="modal-close" onclick="closeModal('certificateModal')" style="color: #64748b;">&times;</button>
+            </div>
+            
+            <!-- Documento Imprimible -->
+            <div id="printable-certificate" style="border: 4px double #1e3a8a; padding: 35px 30px; background: #fafafa; font-family: 'Times New Roman', Times, serif;">
+                <!-- Encabezado Parroquial -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0; font-size: 1.5rem; text-transform: uppercase; color: #1e3a8a; letter-spacing: 1px; font-weight: bold;">
+                        PARROQUIA ECLESIÁSTICA SAN JOSÉ
+                    </h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.95rem; color: #475569; font-style: italic;">
+                        Diócesis Parroquial • Archivo Histórico de Bautismos
+                    </p>
+                    <div style="width: 140px; height: 2px; background: #1e3a8a; margin: 12px auto 0 auto;"></div>
+                </div>
+
+                <h3 style="text-align: center; text-transform: uppercase; font-size: 1.35rem; letter-spacing: 2px; color: #0f172a; margin: 25px 0; text-decoration: underline;">
+                    FE DE BAUTISMO / CERTIFICADO DE BAUTISMO
+                </h3>
+
+                <p style="font-size: 1.05rem; line-height: 1.7; text-align: justify; color: #334155; margin-bottom: 20px;">
+                    El suscrito Párroco / Secretario Parroquial hace constar que en el <strong><span id="cert-tomo">-</span></strong>, 
+                    Folio/Página <strong><span id="cert-pagina">-</span></strong>, Acta Nº <strong><span id="cert-acta">-</span></strong> 
+                    de Bautismos de esta Parroquia, se encuentra asentada la partida que a continuación se detalla:
+                </p>
+
+                <!-- Cuadro de Datos Formal -->
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 1rem;">
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold; width: 35%;">Nombre del Bautizado:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e3a8a; font-size: 1.1rem;" id="cert-bautizado">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Fecha de Nacimiento:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-nacimiento">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Fecha de Bautismo:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-weight: bold;" id="cert-bautizo">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Padre:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-padre">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Madre:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-madre">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Padrino:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-padrino">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Madrina:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-madrina">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Ministro / Sacerdote:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-ministro">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Notas Marginales:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; font-style: italic;" id="cert-notas">-</td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 0.95rem; line-height: 1.6; text-align: justify; color: #475569; margin-top: 25px;">
+                    Es copia fiel y exacta tomada de su original a solicitud de la parte interesada. Se expide la presente certificación en la Sede Parroquial el día <strong id="cert-expedicion-fecha">-</strong>.
+                </p>
+
+                <!-- Pie con Firma y Sello -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 60px; padding: 0 20px;">
+                    <div style="text-align: center; width: 40%;">
+                        <div style="border-top: 1px solid #0f172a; padding-top: 6px; font-weight: bold; font-size: 0.95rem; color: #0f172a;">
+                            PÁRROCO / SECRETARIO
+                        </div>
+                        <div style="font-size: 0.8rem; color: #64748b;">Firma Autorizada</div>
+                    </div>
+                    <div style="text-align: center; width: 32%; border: 2px dashed #cbd5e1; padding: 18px 10px; border-radius: 50%; color: #94a3b8; font-size: 0.78rem;">
+                        (SELLO PARROQUIAL)
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('certificateModal')">Cerrar</button>
+                <button type="button" class="btn" onclick="window.print()" style="background: #1e3a8a; color: white; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                    <span>Imprimir / Guardar PDF</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1508,8 +1633,12 @@
             container.appendChild(buttonsContainer);
         }
 
+        let currentSelectedActa = null;
+
         // Cargar y mostrar modal con el detalle completo del acta
         function showActaDetail(acta) {
+            currentSelectedActa = acta;
+
             document.getElementById('d-libro').textContent = acta.libro ? acta.libro.numero_libro : '-';
             document.getElementById('d-pag-acta').textContent = `Página ${acta.numero_pagina} • Acta ${acta.numero_acta}`;
             document.getElementById('d-fecha-bautizo').textContent = formatDate(acta.fecha_bautizo);
@@ -1552,6 +1681,35 @@
             }
 
             openModal('detailModal');
+        }
+
+        // Generar y poblar la plantilla del Certificado de Bautismo
+        function openCertificateModal() {
+            if (!currentSelectedActa) return;
+            const a = currentSelectedActa;
+
+            document.getElementById('cert-tomo').textContent = a.libro ? a.libro.numero_libro : 'Tomo No Registrado';
+            document.getElementById('cert-pagina').textContent = a.numero_pagina || '-';
+            document.getElementById('cert-acta').textContent = a.numero_acta || '-';
+            
+            document.getElementById('cert-bautizado').textContent = `${a.bautizado.nombres} ${a.bautizado.apellidos}`;
+            document.getElementById('cert-nacimiento').textContent = a.bautizado.fecha_nacimiento ? formatDate(a.bautizado.fecha_nacimiento) : 'Sin registrar';
+            document.getElementById('cert-bautizo').textContent = formatDate(a.fecha_bautizo);
+
+            document.getElementById('cert-padre').textContent = a.padre ? `${a.padre.nombres} ${a.padre.apellidos}` : 'Sin registrar';
+            document.getElementById('cert-madre').textContent = a.madre ? `${a.madre.nombres} ${a.madre.apellidos}` : 'Sin registrar';
+            document.getElementById('cert-padrino').textContent = a.padrino ? `${a.padrino.nombres} ${a.padrino.apellidos}` : 'Sin registrar';
+            document.getElementById('cert-madrina').textContent = a.madrina ? `${a.madrina.nombres} ${a.madrina.apellidos}` : 'Sin registrar';
+
+            document.getElementById('cert-ministro').textContent = a.ministro || 'Sin registrar';
+            document.getElementById('cert-notas').textContent = a.notas_marginales || 'Ninguna.';
+
+            // Fecha de expedición actual
+            const hoy = new Date();
+            const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('cert-expedicion-fecha').textContent = hoy.toLocaleDateString('es-ES', opcionesFecha);
+
+            openModal('certificateModal');
         }
 
         // Manejo de envío de formulario para guardar un acta nueva
