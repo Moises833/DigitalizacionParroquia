@@ -1166,10 +1166,17 @@
             fetchLibros();
             fetchActas();
 
-            // Configuración de eventos de los modales
+            // Configuración de eventos de los modales y búsqueda en tiempo real
             document.getElementById('openRegisterModal').addEventListener('click', () => openModal('registerModal'));
             document.getElementById('btn-search').addEventListener('click', () => fetchActas());
             document.getElementById('btn-ai-transcribe').addEventListener('click', handleAITranscription);
+
+            // Búsqueda Reactiva en Tiempo Real (Debounce 300ms)
+            const debouncedSearch = debounce(() => fetchActas(), 300);
+            document.getElementById('search-bautizado').addEventListener('input', debouncedSearch);
+            document.getElementById('search-familiar').addEventListener('input', debouncedSearch);
+            document.getElementById('search-anio').addEventListener('input', debouncedSearch);
+            document.getElementById('search-libro').addEventListener('change', () => fetchActas());
 
             // Drag and Drop Zone handler
             const fileInput = document.getElementById('f-imagen_pagina');
@@ -1619,6 +1626,15 @@
                     <span>Auto-Transcribir con IA</span>
                 `;
             });
+        }
+
+        // Helper Debounce para evitar sobrecargar la base de datos mientras el usuario escribe
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
         }
 
         // Helpers de Formateo
