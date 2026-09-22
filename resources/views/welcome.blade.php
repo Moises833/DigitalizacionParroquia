@@ -827,6 +827,14 @@
                 </svg>
             </button>
 
+            <!-- Botón de Respaldo y Copias de Seguridad -->
+            <button class="btn btn-secondary" id="openBackupModal" title="Opciones de Respaldo y Copias de Seguridad" style="display: flex; align-items: center; gap: 6px;">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/>
+                </svg>
+                <span>Respaldo BD</span>
+            </button>
+
             <button class="btn" id="openRegisterModal">
                 <svg width="18" height="18" fill="white" viewBox="0 0 24 24" style="margin-top:-2px">
                     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
@@ -975,6 +983,68 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('detailModal')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Respaldo y Restauración -->
+    <div class="modal-overlay" id="backupModal">
+        <div class="modal-container" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3>Respaldo y Seguridad de Datos</h3>
+                <button class="modal-close" onclick="closeModal('backupModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                    Protege la información parroquial exportando una copia de la base de datos o restaurando un respaldo previo.
+                </p>
+
+                <!-- Opción 1: Descargar Copia de Seguridad -->
+                <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: var(--accent-color); display: flex; align-items: center; gap: 8px;">
+                        📥 Descargar Respaldo Completo (.sqlite)
+                    </h4>
+                    <p style="font-size: 0.83rem; color: var(--text-secondary); margin: 0 0 12px 0;">
+                        Descarga el archivo de base de datos actual con todas las actas, libros y registros. Puedes guardarlo en una pendrive o disco externo.
+                    </p>
+                    <a href="/api/respaldos/descargar" class="btn" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                        <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        Descargar Base de Datos (.sqlite)
+                    </a>
+                </div>
+
+                <!-- Opción 2: Exportar a Excel (CSV) -->
+                <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 10px; padding: 18px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: var(--success-color); display: flex; align-items: center; gap: 8px;">
+                        📊 Exportar a Excel (CSV)
+                    </h4>
+                    <p style="font-size: 0.83rem; color: var(--text-secondary); margin: 0 0 12px 0;">
+                        Exporta todas las actas y relaciones familiares en una hoja de cálculo compatible con Microsoft Excel.
+                    </p>
+                    <a href="/api/respaldos/exportar-csv" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                        Exportar a Excel (CSV)
+                    </a>
+                </div>
+
+                <!-- Opción 3: Restaurar Respaldo -->
+                <div style="background: var(--bg-primary); border: 1px dashed var(--warning-color); border-radius: 10px; padding: 18px;">
+                    <h4 style="margin: 0 0 6px 0; font-size: 1rem; color: var(--warning-color); display: flex; align-items: center; gap: 8px;">
+                        ⚠️ Restaurar Copia de Seguridad
+                    </h4>
+                    <p style="font-size: 0.83rem; color: var(--text-secondary); margin: 0 0 12px 0;">
+                        Selecciona un archivo <code>.sqlite</code> previamente respaldado para reemplazar la base de datos actual.
+                    </p>
+                    <form id="restore-form" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="file" id="f-archivo_backup" name="archivo_backup" accept=".sqlite,.db" class="form-control" required style="font-size: 0.85rem;">
+                        <button type="submit" class="btn" style="background: var(--warning-color); color: white; white-space: nowrap;">
+                            Restaurar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('backupModal')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1168,8 +1238,10 @@
 
             // Configuración de eventos de los modales y búsqueda en tiempo real
             document.getElementById('openRegisterModal').addEventListener('click', () => openModal('registerModal'));
+            document.getElementById('openBackupModal').addEventListener('click', () => openModal('backupModal'));
             document.getElementById('btn-search').addEventListener('click', () => fetchActas());
             document.getElementById('btn-ai-transcribe').addEventListener('click', handleAITranscription);
+            document.getElementById('restore-form').addEventListener('submit', handleRestoreSubmit);
 
             // Búsqueda Reactiva en Tiempo Real (Debounce 300ms)
             const debouncedSearch = debounce(() => fetchActas(), 300);
@@ -1519,6 +1591,43 @@
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Guardar Registro';
+            });
+        }
+
+        // Manejar restauración de respaldo de base de datos
+        function handleRestoreSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            if (!confirm('⚠️ ¿Estás seguro de que deseas restaurar la base de datos? Se reemplazará la información actual por la copia del archivo seleccionado.')) {
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Restaurando...';
+
+            const formData = new FormData(form);
+
+            fetch('/api/respaldos/restaurar', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.message || 'Error al restaurar.');
+                showToast(data.message || 'Base de datos restaurada con éxito.');
+                closeModal('backupModal');
+                fetchActas();
+            })
+            .catch(err => {
+                console.error(err);
+                showToast(err.message || 'Error al restaurar la base de datos.', 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Restaurar';
             });
         }
 

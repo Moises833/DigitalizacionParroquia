@@ -24,3 +24,8 @@ Route::post('/actas/transcribir-imagen', [\App\Http\Controllers\ActaBautizoContr
 Route::get('/libros', function () {
     return response()->json(\App\Models\Libro::all(['id', 'numero_libro']));
 });
+
+// Rutas de Respaldo y Restauración
+Route::get('/respaldos/descargar', [\App\Http\Controllers\RespaldoController::class, 'descargarSqlite']);
+Route::post('/respaldos/restaurar', [\App\Http\Controllers\RespaldoController::class, 'restaurar']);
+Route::get('/respaldos/exportar-csv', [\App\Http\Controllers\RespaldoController::class, 'exportarCsv']);
