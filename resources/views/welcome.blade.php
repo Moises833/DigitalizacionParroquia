@@ -1760,19 +1760,37 @@
             openModal('certificateModal');
         }
 
-        // Mostrar Modal con Código QR para vinculación móvil
+        // Mostrar Modal con Código QR detectando la IP real de Ethernet/Wi-Fi
         function showQRModal() {
-            const currentHost = window.location.hostname;
-            const currentPort = window.location.port || '8000';
-            const movilUrl = `http://${currentHost}:${currentPort}/movil`;
+            openModal('qrModal');
             
             const qrImg = document.getElementById('qr-img');
             const qrUrlText = document.getElementById('qr-url-text');
             
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(movilUrl)}`;
-            qrUrlText.textContent = movilUrl;
+            qrUrlText.textContent = 'Detectando IP de Ethernet / Wi-Fi local...';
 
-            openModal('qrModal');
+            fetch('/api/movil/network-ips')
+                .then(res => res.json())
+                .then(data => {
+                    let targetIp = data.primary_ip || window.location.hostname;
+                    if (targetIp === '127.0.0.1' || targetIp === 'localhost') {
+                        targetIp = window.location.hostname;
+                    }
+
+                    const movilUrl = `http://${targetIp}:${data.port || 8000}/movil`;
+                    
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(movilUrl)}`;
+                    qrUrlText.innerHTML = `
+                        <div style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; margin-bottom:2px;">Enlace de Red Local (Ethernet / Wi-Fi):</div>
+                        <a href="${movilUrl}" target="_blank" style="color: var(--accent-color); font-size: 1rem; text-decoration: none;">${movilUrl}</a>
+                    `;
+                })
+                .catch(err => {
+                    console.error('Error al detectar IPs:', err);
+                    const fallbackUrl = `http://${window.location.hostname}:8000/movil`;
+                    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fallbackUrl)}`;
+                    qrUrlText.textContent = fallbackUrl;
+                });
         }
 
         let lastReceivedPhotoTimestamp = 0;

@@ -57,12 +57,63 @@ class MovilUploadController extends Controller
             ]);
         }
 
-        $data = json_decode(File::get($jsonPath), true);
-
         return response()->json([
             'success'   => true,
             'has_photo' => true,
             'data'      => $data
+        ]);
+    }
+
+    /**
+     * Obtener las direcciones IP locales de red (Ethernet y Wi-Fi) filtrando VPNs
+     */
+    public function getNetworkIps(): JsonResponse
+    {
+        $ips = [];
+        $primaryIp = null;
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $output = shell_exec('powershell -Command "Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -notlike \'127.*\' -and $_.IPAddress -notlike \'169.*\'} | Select-Object IPAddress, InterfaceAlias | ConvertTo-Json"');
+            $decoded = json_decode($output, true);
+
+            if ($decoded) {
+                if (isset($decoded['IPAddress'])) {
+                    $decoded = [$decoded];
+                }
+
+                foreach ($decoded as $item) {
+                    $ip = $item['IPAddress'] ?? '';
+                    $alias = $item['InterfaceAlias'] ?? '';
+
+                    $isVpn = (bool) preg_match('/vpn|radmin|hamachi|virtual|vbox|vmware|loopback/i', $alias);
+                    
+                    if ($ip && !$isVpn) {
+                        $ips[] = [
+                            'ip'    => $ip,
+                            'alias' => $alias,
+                            'is_lan' => true
+                        ];
+                        if (!$primaryIp) $primaryIp = $ip;
+                    } else if ($ip) {
+                        $ips[] = [
+                            'ip'    => $ip,
+                            'alias' => $alias,
+                            'is_lan' => false
+                        ];
+                    }
+                }
+            }
+        }
+
+        if (empty($primaryIp) && isset($_SERVER['SERVER_ADDR']) && $_SERVER['SERVER_ADDR'] !== '127.0.0.1') {
+            $primaryIp = $_SERVER['SERVER_ADDR'];
+        }
+
+        return response()->json([
+            'success'     => true,
+            'primary_ip'  => $primaryIp ?: gethostbyname(gethostname()),
+            'all_ips'     => $ips,
+            'port'        => 8000
         ]);
     }
 }
