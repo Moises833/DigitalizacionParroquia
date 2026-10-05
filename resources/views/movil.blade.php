@@ -170,17 +170,29 @@
     </header>
 
     <div class="card">
-        <label for="mobile-file-input" class="camera-trigger">
+        <!-- Opción 1: Tomar Foto en Vivo con Cámara -->
+        <label for="mobile-camera-input" class="camera-trigger">
             <div class="camera-icon">
                 <svg viewBox="0 0 24 24">
                     <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
                 </svg>
             </div>
-            <strong style="font-size: 1.05rem; display: block; margin-bottom: 4px;">Tomar Foto del Folio</strong>
-            <span style="font-size: 0.8rem; color: var(--text-secondary);">Presiona para abrir la cámara del teléfono</span>
+            <strong style="font-size: 1.05rem; display: block; margin-bottom: 4px;">Tomar Foto Ahora (Cámara)</strong>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Abre la cámara del teléfono para capturar en vivo</span>
         </label>
+        <input type="file" id="mobile-camera-input" accept="image/*" capture="environment">
 
-        <input type="file" id="mobile-file-input" accept="image/*" capture="environment">
+        <!-- Opción 2: Elegir de la Galería de Fotos (Tomada Anteriormente) -->
+        <label for="mobile-gallery-input" class="camera-trigger" style="border-style: solid; border-color: #334155; background: rgba(30, 41, 59, 0.6);">
+            <div class="camera-icon" style="background: linear-gradient(135deg, #059669, #10b981);">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+            </div>
+            <strong style="font-size: 1.05rem; display: block; margin-bottom: 4px;">Elegir de la Galería de Fotos</strong>
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Selecciona una foto tomada previamente en tus álbumes</span>
+        </label>
+        <input type="file" id="mobile-gallery-input" accept="image/*">
 
         <div class="preview-box" id="preview-box">
             <img id="mobile-preview-img" src="" alt="Vista previa">
@@ -197,33 +209,47 @@
     </div>
 
     <script>
-        const fileInput = document.getElementById('mobile-file-input');
+        const cameraInput = document.getElementById('mobile-camera-input');
+        const galleryInput = document.getElementById('mobile-gallery-input');
         const previewBox = document.getElementById('preview-box');
         const previewImg = document.getElementById('mobile-preview-img');
         const sendBtn = document.getElementById('btn-send-to-pc');
         const statusBanner = document.getElementById('status-banner');
 
-        fileInput.addEventListener('change', (e) => {
+        let selectedFile = null;
+
+        function handleFileSelection(file) {
+            if (!file) return;
+            selectedFile = file;
+            const reader = new FileReader();
+
+            reader.onload = function(evt) {
+                previewImg.src = evt.target.result;
+                previewBox.style.display = 'block';
+                sendBtn.style.display = 'flex';
+                statusBanner.style.display = 'none';
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        cameraInput.addEventListener('change', (e) => {
             if (e.target.files && e.target.files[0]) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
+                handleFileSelection(e.target.files[0]);
+            }
+        });
 
-                reader.onload = function(evt) {
-                    previewImg.src = evt.target.result;
-                    previewBox.style.display = 'block';
-                    sendBtn.style.display = 'flex';
-                    statusBanner.style.display = 'none';
-                };
-
-                reader.readAsDataURL(file);
+        galleryInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileSelection(e.target.files[0]);
             }
         });
 
         sendBtn.addEventListener('click', () => {
-            if (!fileInput.files || !fileInput.files[0]) return;
+            if (!selectedFile) return;
 
             const formData = new FormData();
-            formData.append('imagen_pagina', fileInput.files[0]);
+            formData.append('imagen_pagina', selectedFile);
 
             sendBtn.disabled = true;
             sendBtn.textContent = 'Enviando foto...';
