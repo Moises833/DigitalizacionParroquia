@@ -847,6 +847,14 @@
                 </svg>
             </button>
 
+            <!-- Botón de Conexión Móvil QR -->
+            <button class="btn btn-secondary" id="openQRModal" title="Vincular teléfono móvil mediante código QR" style="display: flex; align-items: center; gap: 6px;">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm13 0h3v3h-3v-3zm-3 3h3v3h-3v-3zm3 3h3v3h-3v-3zm-3-6h3v3h-3v-3z"/>
+                </svg>
+                <span>📱 Vincular Teléfono</span>
+            </button>
+
             <!-- Botón de Respaldo y Copias de Seguridad -->
             <button class="btn btn-secondary" id="openBackupModal" title="Opciones de Respaldo y Copias de Seguridad" style="display: flex; align-items: center; gap: 6px;">
                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
@@ -1112,6 +1120,42 @@
         </div>
     </div>
 
+    <!-- Modal: Conexión Móvil QR -->
+    <div class="modal-overlay" id="qrModal">
+        <div class="modal-container" style="max-width: 550px; text-align: center;">
+            <div class="modal-header">
+                <h3>📱 Conectar Teléfono Móvil</h3>
+                <button class="modal-close" onclick="closeModal('qrModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; align-items: center; gap: 15px;">
+                <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 450px;">
+                    Escanea este código QR con la cámara de tu teléfono móvil para tomar fotos de las actas y enviarlas en tiempo real a la computadora.
+                </p>
+
+                <div id="qr-code-container" style="background: white; padding: 15px; border-radius: 16px; border: 1px solid var(--card-border); box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    <img id="qr-img" src="" alt="Código QR" style="width: 220px; height: 220px; display: block;">
+                </div>
+
+                <div style="font-size: 0.85rem; background: var(--input-bg); padding: 10px 16px; border-radius: 10px; color: var(--accent-color); font-weight: bold; word-break: break-all;" id="qr-url-text">
+                    Cargando enlace de red local...
+                </div>
+
+                <div style="font-size: 0.8rem; color: var(--text-secondary); text-align: left; background: var(--bg-primary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); width: 100%;">
+                    <strong style="color: var(--text-primary);">📌 Instrucciones:</strong>
+                    <ol style="margin-left: 20px; margin-top: 6px; line-height: 1.6;">
+                        <li>Conecta tu teléfono a la misma red Wi-Fi de esta computadora.</li>
+                        <li>Abre la cámara del teléfono y escanea el código QR.</li>
+                        <li>Toma la foto del folio y presiona <strong>"Enviar a la Computadora"</strong>.</li>
+                        <li>La foto aparecerá automáticamente en el formulario de registro.</li>
+                    </ol>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('qrModal')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Respaldo y Restauración -->
     <div class="modal-overlay" id="backupModal">
         <div class="modal-container" style="max-width: 650px;">
@@ -1364,9 +1408,13 @@
             // Configuración de eventos de los modales y búsqueda en tiempo real
             document.getElementById('openRegisterModal').addEventListener('click', () => openModal('registerModal'));
             document.getElementById('openBackupModal').addEventListener('click', () => openModal('backupModal'));
+            document.getElementById('openQRModal').addEventListener('click', showQRModal);
             document.getElementById('btn-search').addEventListener('click', () => fetchActas());
             document.getElementById('btn-ai-transcribe').addEventListener('click', handleAITranscription);
             document.getElementById('restore-form').addEventListener('submit', handleRestoreSubmit);
+
+            // Iniciar sincronización en segundo plano para recibir fotos del teléfono
+            startMobilePhotoPolling();
 
             // Búsqueda Reactiva en Tiempo Real (Debounce 300ms)
             const debouncedSearch = debounce(() => fetchActas(), 300);
@@ -1710,6 +1758,75 @@
             document.getElementById('cert-expedicion-fecha').textContent = hoy.toLocaleDateString('es-ES', opcionesFecha);
 
             openModal('certificateModal');
+        }
+
+        // Mostrar Modal con Código QR para vinculación móvil
+        function showQRModal() {
+            const currentHost = window.location.hostname;
+            const currentPort = window.location.port || '8000';
+            const movilUrl = `http://${currentHost}:${currentPort}/movil`;
+            
+            const qrImg = document.getElementById('qr-img');
+            const qrUrlText = document.getElementById('qr-url-text');
+            
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(movilUrl)}`;
+            qrUrlText.textContent = movilUrl;
+
+            openModal('qrModal');
+        }
+
+        let lastReceivedPhotoTimestamp = 0;
+
+        // Polling para detectar fotos enviadas desde el teléfono en tiempo real
+        function startMobilePhotoPolling() {
+            setInterval(() => {
+                fetch('/api/movil/check-latest')
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.success && res.has_photo && res.data) {
+                            if (res.data.timestamp > lastReceivedPhotoTimestamp) {
+                                if (lastReceivedPhotoTimestamp === 0) {
+                                    lastReceivedPhotoTimestamp = res.data.timestamp;
+                                    return;
+                                }
+
+                                lastReceivedPhotoTimestamp = res.data.timestamp;
+                                showToast(`📱 ¡Nueva foto recibida desde el teléfono (${res.data.formatted_time})!`);
+
+                                // Cargar automáticamente la foto en el formulario
+                                fetchAndAttachMobilePhoto(res.data.url);
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error en polling móvil:', err));
+            }, 3000);
+        }
+
+        // Adjuntar automáticamente la foto del móvil en la vista previa del registro
+        function fetchAndAttachMobilePhoto(photoUrl) {
+            fetch(photoUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], 'foto_movil.jpg', { type: blob.type || 'image/jpeg' });
+                    const container = new DataTransfer();
+                    container.items.add(file);
+                    
+                    const fileInput = document.getElementById('f-imagen_pagina');
+                    fileInput.files = container.files;
+                    fileInput.dispatchEvent(new Event('change'));
+
+                    // Abrir el modal de registro si no está abierto aún
+                    openModal('registerModal');
+
+                    const statusMsg = document.getElementById('ai-status-msg');
+                    if (statusMsg) {
+                        statusMsg.style.display = 'block';
+                        statusMsg.style.background = 'rgba(37, 99, 235, 0.15)';
+                        statusMsg.style.color = '#60a5fa';
+                        statusMsg.textContent = '📱 ¡Foto enviada desde el teléfono cargada! Presiona "Auto-Transcribir con IA" para procesarla.';
+                    }
+                })
+                .catch(err => console.error('Error al adjuntar foto móvil:', err));
         }
 
         // Manejo de envío de formulario para guardar un acta nueva

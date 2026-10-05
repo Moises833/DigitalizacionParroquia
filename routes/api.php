@@ -29,3 +29,7 @@ Route::get('/libros', function () {
 Route::get('/respaldos/descargar', [\App\Http\Controllers\RespaldoController::class, 'descargarSqlite']);
 Route::post('/respaldos/restaurar', [\App\Http\Controllers\RespaldoController::class, 'restaurar']);
 Route::get('/respaldos/exportar-csv', [\App\Http\Controllers\RespaldoController::class, 'exportarCsv']);
+
+// Rutas de Carga Móvil (Teléfono -> PC)
+Route::post('/movil/upload', [\App\Http\Controllers\MovilUploadController::class, 'upload']);
+Route::get('/movil/check-latest', [\App\Http\Controllers\MovilUploadController::class, 'checkLatest']);
