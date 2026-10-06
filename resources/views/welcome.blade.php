@@ -1797,31 +1797,37 @@
 
         // Polling para detectar fotos enviadas desde el teléfono en tiempo real
         function startMobilePhotoPolling() {
+            // Inicializar timestamp actual para detectar adecuadamente fotos nuevas al instante
+            fetch('/api/movil/check-latest')
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success && res.has_photo && res.data) {
+                        lastReceivedPhotoTimestamp = res.data.timestamp;
+                    }
+                })
+                .catch(() => {});
+
+            // Polling cada 2 segundos
             setInterval(() => {
                 fetch('/api/movil/check-latest')
                     .then(res => res.json())
                     .then(res => {
                         if (res.success && res.has_photo && res.data) {
                             if (res.data.timestamp > lastReceivedPhotoTimestamp) {
-                                if (lastReceivedPhotoTimestamp === 0) {
-                                    lastReceivedPhotoTimestamp = res.data.timestamp;
-                                    return;
-                                }
-
                                 lastReceivedPhotoTimestamp = res.data.timestamp;
-                                showToast(`📱 ¡Nueva foto recibida desde el teléfono (${res.data.formatted_time})!`);
-
-                                // Cargar automáticamente la foto en el formulario
                                 fetchAndAttachMobilePhoto(res.data.url);
                             }
                         }
                     })
                     .catch(err => console.error('Error en polling móvil:', err));
-            }, 3000);
+            }, 2000);
         }
 
-        // Adjuntar automáticamente la foto del móvil en la vista previa del registro
+        // Adjuntar automáticamente la foto recibida desde el teléfono, abrir modal de registro y auto-transcribir con IA
         function fetchAndAttachMobilePhoto(photoUrl) {
+            // Cerrar el modal del QR si estaba abierto
+            closeModal('qrModal');
+
             fetch(photoUrl)
                 .then(res => res.blob())
                 .then(blob => {
@@ -1833,16 +1839,18 @@
                     fileInput.files = container.files;
                     fileInput.dispatchEvent(new Event('change'));
 
-                    // Abrir el modal de registro si no está abierto aún
+                    // Abrir la pestaña / modal de registro en la computadora
                     openModal('registerModal');
 
-                    const statusMsg = document.getElementById('ai-status-msg');
-                    if (statusMsg) {
-                        statusMsg.style.display = 'block';
-                        statusMsg.style.background = 'rgba(37, 99, 235, 0.15)';
-                        statusMsg.style.color = '#60a5fa';
-                        statusMsg.textContent = '📱 ¡Foto enviada desde el teléfono cargada! Presiona "Auto-Transcribir con IA" para procesarla.';
-                    }
+                    const regModalContainer = document.querySelector('#registerModal .modal-container');
+                    if (regModalContainer) regModalContainer.scrollTop = 0;
+
+                    showToast('📱 ¡Foto del teléfono recibida! Iniciando transcripción por IA...');
+
+                    // Disparar la transcripción por IA de forma 100% automática sin requerir clics
+                    setTimeout(() => {
+                        handleAITranscription();
+                    }, 400);
                 })
                 .catch(err => console.error('Error al adjuntar foto móvil:', err));
         }
