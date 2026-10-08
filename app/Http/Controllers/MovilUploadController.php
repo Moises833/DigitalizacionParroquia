@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class MovilUploadController extends Controller
@@ -30,11 +31,16 @@ class MovilUploadController extends Controller
             'path'           => 'storage/temp_movil/' . $filename,
             'url'            => '/' . $publicUrl,
             'timestamp'      => time(),
-            'formatted_time' => date('h:i:s A')
+            'formatted_time' => date('Y-m-d h:i:s A'),
+            'client_ip'      => $request->ip(),
+            'file_size_bytes'=> $file->getSize(),
         ];
 
         File::ensureDirectoryExists(storage_path('app/temp_movil'));
-        File::put(storage_path('app/temp_movil/last_upload.json'), json_encode($lastUploadData));
+        File::put(storage_path('app/temp_movil/last_upload.json'), json_encode($lastUploadData, JSON_PRETTY_PRINT));
+
+        // Registrar en los logs de Laravel para diagnóstico
+        Log::info("📱 [DEBUG MÓVIL] Foto recibida con éxito desde la IP {$request->ip()}: {$filename} (" . round($file->getSize() / 1024, 2) . " KB)");
 
         return response()->json([
             'success' => true,
@@ -53,14 +59,48 @@ class MovilUploadController extends Controller
         if (!File::exists($jsonPath)) {
             return response()->json([
                 'success'   => false,
-                'has_photo' => false
+                'has_photo' => false,
+                'message'   => 'Aún no se ha recibido ninguna foto desde el teléfono.'
             ]);
         }
+
+        $data = json_decode(File::get($jsonPath), true);
 
         return response()->json([
             'success'   => true,
             'has_photo' => true,
             'data'      => $data
+        ]);
+    }
+
+    /**
+     * Endpoint de Diagnóstico / Debug Status
+     */
+    public function debugStatus(): JsonResponse
+    {
+        $jsonPath = storage_path('app/temp_movil/last_upload.json');
+        $hasUploadJson = File::exists($jsonPath);
+        $lastUpload = $hasUploadJson ? json_decode(File::get($jsonPath), true) : null;
+
+        $files = [];
+        $tempDir = storage_path('app/public/temp_movil');
+        if (File::exists($tempDir)) {
+            foreach (File::files($tempDir) as $file) {
+                $files[] = [
+                    'name' => $file->getFilename(),
+                    'size' => $file->getSize(),
+                    'modified' => date('Y-m-d H:i:s', $file->getMTime()),
+                ];
+            }
+        }
+
+        return response()->json([
+            'success'          => true,
+            'has_upload_json'  => $hasUploadJson,
+            'last_upload'      => $lastUpload,
+            'total_temp_files' => count($files),
+            'files'            => array_slice(array_reverse($files), 0, 5),
+            'server_time'      => date('Y-m-d H:i:s'),
         ]);
     }
 

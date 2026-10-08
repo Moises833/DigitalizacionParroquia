@@ -33,4 +33,5 @@ Route::get('/respaldos/exportar-csv', [\App\Http\Controllers\RespaldoController:
 // Rutas de Carga Móvil (Teléfono -> PC)
 Route::post('/movil/upload', [\App\Http\Controllers\MovilUploadController::class, 'upload']);
 Route::get('/movil/check-latest', [\App\Http\Controllers\MovilUploadController::class, 'checkLatest']);
+Route::get('/movil/debug-status', [\App\Http\Controllers\MovilUploadController::class, 'debugStatus']);
 Route::get('/movil/network-ips', [\App\Http\Controllers\MovilUploadController::class, 'getNetworkIps']);
