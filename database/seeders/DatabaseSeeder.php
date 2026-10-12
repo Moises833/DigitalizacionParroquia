@@ -55,6 +55,7 @@ class DatabaseSeeder extends Seeder
         ], [
             'cedula' => null,
             'fecha_nacimiento' => '1998-05-15',
+            'lugar_nacimiento' => 'Caracas, Parroquia San Juan',
             'genero' => 'M'
         ]);
 

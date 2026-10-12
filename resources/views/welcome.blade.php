@@ -990,6 +990,7 @@
                         <h4 class="form-section-title">Datos del Bautizado</h4>
                         <div class="detail-row"><span class="detail-label">Nombre Completo:</span><span class="detail-value" id="d-nombre" style="font-weight: 700; color: var(--accent-color);">-</span></div>
                         <div class="detail-row"><span class="detail-label">Fecha Nacimiento:</span><span class="detail-value" id="d-fecha-nacimiento">-</span></div>
+                        <div class="detail-row"><span class="detail-label">Lugar de Nacimiento:</span><span class="detail-value" id="d-lugar-nacimiento">-</span></div>
                         <div class="detail-row"><span class="detail-label">Género:</span><span class="detail-value" id="d-genero">-</span></div>
 
                         <h4 class="form-section-title">Padres y Padrinos</h4>
@@ -1061,6 +1062,10 @@
                     <tr>
                         <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Fecha de Nacimiento:</td>
                         <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-nacimiento">-</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Lugar de Nacimiento:</td>
+                        <td style="padding: 8px 12px; border: 1px solid #cbd5e1;" id="cert-lugar-nacimiento">-</td>
                     </tr>
                     <tr>
                         <td style="padding: 8px 12px; border: 1px solid #cbd5e1; background: #f1f5f9; font-weight: bold;">Fecha de Bautismo:</td>
@@ -1290,10 +1295,14 @@
                         </div>
                     </div>
                     
-                    <div class="grid-2" style="margin-top: 15px;">
+                    <div class="grid-3" style="margin-top: 15px;">
                         <div class="form-group">
                             <label for="f-bautizado-fecha_nacimiento">Fecha de Nacimiento</label>
                             <input type="date" id="f-bautizado-fecha_nacimiento" name="bautizado[fecha_nacimiento]" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="f-bautizado-lugar_nacimiento">Lugar de Nacimiento</label>
+                            <input type="text" id="f-bautizado-lugar_nacimiento" name="bautizado[lugar_nacimiento]" class="form-control" placeholder="Ej: Caracas, Parroquia San Juan">
                         </div>
                         <div class="form-group">
                             <label for="f-bautizado-genero">Género *</label>
@@ -1617,6 +1626,7 @@
                             <span class="gender-icon gender-${acta.bautizado.genero}">${generoSigno}</span>
                             <strong>${acta.bautizado.nombres} ${acta.bautizado.apellidos}</strong>
                         </div>
+                        ${acta.bautizado.lugar_nacimiento ? `<div style="font-size:0.75rem; color:var(--text-secondary); margin-left: 28px; margin-top: 2px;">📍 ${acta.bautizado.lugar_nacimiento}</div>` : ''}
                     </td>
                     <td>${formatDate(acta.fecha_bautizo)}</td>
                     <td style="font-size:0.85rem; color:var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
@@ -1694,6 +1704,7 @@
             
             document.getElementById('d-nombre').textContent = `${acta.bautizado.nombres} ${acta.bautizado.apellidos}`;
             document.getElementById('d-fecha-nacimiento').textContent = acta.bautizado.fecha_nacimiento ? formatDate(acta.bautizado.fecha_nacimiento) : '-';
+            document.getElementById('d-lugar-nacimiento').textContent = acta.bautizado.lugar_nacimiento || 'Sin registrar';
             document.getElementById('d-genero').textContent = acta.bautizado.genero === 'M' ? 'Masculino (M)' : 'Femenino (F)';
 
             document.getElementById('d-padre').textContent = acta.padre ? `${acta.padre.nombres} ${acta.padre.apellidos} ${acta.padre.cedula ? '(' + acta.padre.cedula + ')' : ''}` : 'Sin registrar';
@@ -1742,6 +1753,7 @@
             
             document.getElementById('cert-bautizado').textContent = `${a.bautizado.nombres} ${a.bautizado.apellidos}`;
             document.getElementById('cert-nacimiento').textContent = a.bautizado.fecha_nacimiento ? formatDate(a.bautizado.fecha_nacimiento) : 'Sin registrar';
+            document.getElementById('cert-lugar-nacimiento').textContent = a.bautizado.lugar_nacimiento || 'Sin registrar';
             document.getElementById('cert-bautizo').textContent = formatDate(a.fecha_bautizo);
 
             document.getElementById('cert-padre').textContent = a.padre ? `${a.padre.nombres} ${a.padre.apellidos}` : 'Sin registrar';
@@ -1985,7 +1997,8 @@
                 if (d.bautizado) {
                     if (d.bautizado.nombres) document.getElementById('f-bautizado-nombres').value = d.bautizado.nombres;
                     if (d.bautizado.apellidos) document.getElementById('f-bautizado-apellidos').value = d.bautizado.apellidos;
-                    if (d.bautizado.fecha_nacimiento) document.getElementById('f-bautizado-fecha_nacimiento').value = d.bautizado.fecha_nacimiento;
+                    if (d.bautizado.fecha_nacimiento) document.getElementById('f-bautizado-fecha_nacimiento').value = d.bautizado.fecha_nacimiento.trim();
+                    if (d.bautizado.lugar_nacimiento) document.getElementById('f-bautizado-lugar_nacimiento').value = d.bautizado.lugar_nacimiento;
                     if (d.bautizado.genero) document.getElementById('f-bautizado-genero').value = d.bautizado.genero;
                 }
 
