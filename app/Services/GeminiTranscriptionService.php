@@ -34,7 +34,7 @@ class GeminiTranscriptionService
             $mimeType  = $imageFile->getMimeType() ?: 'image/jpeg';
 
             $prompt = <<<PROMPT
-Eres un archivista experto en paleografía e historia eclesiástica. Analiza esta fotografía de una página de un libro de bautizos antiguo escrito a mano en letra cursiva manuscrita.
+Eres un archivista experto en paleografía e historia eclesiástica. Analiza esta fotografía o recorte de un folio/partida de libro de bautizos antiguo escrito a mano en letra cursiva manuscrita. La imagen contiene un párrafo o registro de bautizo específico. Extrae exclusivamente los datos de dicha partida de bautizo sin confundir información.
 
 INSTRUCCIONES CRÍTICAS:
 1. REGLA ESTRICTA DE FECHAS: En los libros parroquiales de bautismos, las fechas están casi siempre escritas de forma manuscrita literal en palabras (por ejemplo: "veintiuno de mayo de mil novecientos ochenta y uno", "a los doce días de octubre de mil novecientos sesenta y siete", "a los tres días del mes de agosto del año dos mil dos").

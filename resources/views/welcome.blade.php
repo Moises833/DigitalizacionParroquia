@@ -630,6 +630,161 @@
             border: 1px solid var(--card-border);
         }
 
+        /* Panel de Recorte y Selección de Párrafo Interactivo */
+        .crop-editor-wrapper {
+            margin-top: 15px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .crop-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .crop-preset-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .crop-preset-btn {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border-radius: 6px;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .crop-preset-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.08);
+        }
+
+        .crop-preset-btn.active {
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-color: #6366f1;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .crop-container-outer {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            background: #090d16;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        .crop-container {
+            position: relative;
+            display: inline-block;
+            user-select: none;
+            touch-action: none;
+            line-height: 0;
+            max-width: 100%;
+        }
+
+        .crop-image {
+            max-width: 100%;
+            max-height: 520px;
+            display: block;
+            object-fit: contain;
+            pointer-events: none;
+            border-radius: 4px;
+        }
+
+        .crop-box {
+            position: absolute;
+            box-shadow: 0 0 0 9999px rgba(10, 15, 30, 0.65);
+            border: 2px dashed #818cf8;
+            cursor: move;
+            box-sizing: border-box;
+            line-height: normal;
+            touch-action: none;
+            transition: border-color 0.15s;
+        }
+
+        .crop-box:hover {
+            border-color: #a855f7;
+        }
+
+        .crop-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            pointer-events: none;
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            white-space: nowrap;
+        }
+
+        /* 8 Handles de Redimensionamiento */
+        .crop-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ffffff;
+            border: 2px solid #6366f1;
+            border-radius: 3px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .crop-handle.handle-nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .crop-handle.handle-n  { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+        .crop-handle.handle-ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .crop-handle.handle-e  { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
+        .crop-handle.handle-se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+        .crop-handle.handle-s  { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+        .crop-handle.handle-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .crop-handle.handle-w  { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
+
+        .crop-footer {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .crop-preview-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         /* Detail Modal layout */
         .detail-grid {
             display: grid;
@@ -1378,17 +1533,88 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Foto de la Página del Libro Físico (Compresión a WebP auto al guardar)</label>
+                        <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">Foto de la Página del Libro Físico</span>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal;">Compresión automática WebP al guardar</span>
+                        </label>
+                        
                         <div class="drag-zone" id="drag-zone">
                             <svg viewBox="0 0 24 24">
                                 <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
                             </svg>
                             <p style="font-weight: 500;">Arrastra la foto aquí o haz clic para buscar</p>
-                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">Formatos soportados: JPG, PNG, WEBP (Max: 10MB)</p>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">Formatos soportados: JPG, PNG, WEBP (Max: 10MB) • O envíala por QR desde el celular</p>
                             <input type="file" id="f-imagen_pagina" name="imagen_pagina" accept="image/*">
                         </div>
-                        <div class="preview-container" id="preview-container">
-                            <img src="" alt="Vista previa" class="image-preview" id="image-preview">
+
+                        <!-- Editor de Recorte y Selección de Párrafo (1 de los 3 registros) -->
+                        <div class="crop-editor-wrapper" id="crop-editor-wrapper" style="display: none;">
+                            <div class="crop-toolbar">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+                                        Seleccionar Registro en la Página:
+                                    </span>
+                                </div>
+                                <div class="crop-preset-group">
+                                    <button type="button" class="crop-preset-btn active" id="btn-crop-p1" title="Seleccionar el 1º tercio superior de la página">
+                                        <span>1º Registro (Arriba)</span>
+                                    </button>
+                                    <button type="button" class="crop-preset-btn" id="btn-crop-p2" title="Seleccionar el 2º tercio medio de la página">
+                                        <span>2º Registro (Medio)</span>
+                                    </button>
+                                    <button type="button" class="crop-preset-btn" id="btn-crop-p3" title="Seleccionar el 3º tercio inferior de la página">
+                                        <span>3º Registro (Abajo)</span>
+                                    </button>
+                                    <button type="button" class="crop-preset-btn" id="btn-crop-full" title="Seleccionar toda la página completa">
+                                        <span>Página Completa</span>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-cambiar-foto" style="margin-left: 6px; padding: 5px 10px; font-size: 0.78rem;">
+                                        Cambiar Foto
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 10px 0;">
+                                💡 <em>Arrastra o redimensiona el recuadro interactivo sobre el párrafo del acta que deseas transcribir para que no se mezclen los datos de los otros bautizos de la página.</em>
+                            </p>
+
+                            <!-- Contenedor con Recuadro Interactivo -->
+                            <div class="crop-container-outer">
+                                <div class="crop-container" id="crop-container">
+                                    <img src="" alt="Folio del Libro" class="crop-image" id="image-crop-source">
+                                    <div class="crop-box" id="crop-box">
+                                        <span class="crop-badge" id="crop-badge-text">1º Registro Seleccionado</span>
+                                        <div class="crop-handle handle-nw" data-handle="nw"></div>
+                                        <div class="crop-handle handle-n"  data-handle="n"></div>
+                                        <div class="crop-handle handle-ne" data-handle="ne"></div>
+                                        <div class="crop-handle handle-e"  data-handle="e"></div>
+                                        <div class="crop-handle handle-se" data-handle="se"></div>
+                                        <div class="crop-handle handle-s"  data-handle="s"></div>
+                                        <div class="crop-handle handle-sw" data-handle="sw"></div>
+                                        <div class="crop-handle handle-w"  data-handle="w"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pie del Editor: Miniatura de Recorte y Botón de Transcripción -->
+                            <div class="crop-footer">
+                                <div class="crop-preview-mini">
+                                    <canvas id="crop-live-thumb" width="130" height="75" style="border: 1px solid var(--card-border); border-radius: 6px; background: #0f172a; object-fit: contain;"></canvas>
+                                    <div>
+                                        <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);">Párrafo a procesar por IA</div>
+                                        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; cursor: pointer;">
+                                            <input type="checkbox" id="f-guardar-solo-recorte" checked style="cursor: pointer;">
+                                            <span>Guardar este recorte como la foto oficial del acta</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn" id="btn-crop-transcribe" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">
+                                    <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+                                    <span>Transcribir Párrafo Seleccionado</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1432,22 +1658,47 @@
             document.getElementById('search-anio').addEventListener('input', debouncedSearch);
             document.getElementById('search-libro').addEventListener('change', () => fetchActas());
 
+            // Inicializar eventos del Editor de Recorte de Párrafo
+            initCropEditorEvents();
+
             // Drag and Drop Zone handler
             const fileInput = document.getElementById('f-imagen_pagina');
             const dragZone = document.getElementById('drag-zone');
-            const previewContainer = document.getElementById('preview-container');
-            const imagePreview = document.getElementById('image-preview');
 
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files && e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(evt) {
-                        imagePreview.src = evt.target.result;
-                        previewContainer.style.display = 'flex';
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
+                    loadCropImage(e.target.files[0]);
                 }
             });
+
+            dragZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dragZone.classList.add('dragover');
+            });
+            dragZone.addEventListener('dragleave', () => {
+                dragZone.classList.remove('dragover');
+            });
+            dragZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragZone.classList.remove('dragover');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    fileInput.files = e.dataTransfer.files;
+                    loadCropImage(e.dataTransfer.files[0]);
+                }
+            });
+
+            const btnCambiar = document.getElementById('btn-cambiar-foto');
+            if (btnCambiar) {
+                btnCambiar.addEventListener('click', () => {
+                    fileInput.value = '';
+                    fileInput.click();
+                });
+            }
+
+            const btnCropTranscribe = document.getElementById('btn-crop-transcribe');
+            if (btnCropTranscribe) {
+                btnCropTranscribe.addEventListener('click', handleAITranscription);
+            }
 
             // Form Submit Handler
             const form = document.getElementById('add-acta-form');
@@ -1492,8 +1743,17 @@
             document.getElementById(modalId).classList.remove('active');
             if(modalId === 'registerModal') {
                 document.getElementById('add-acta-form').reset();
-                document.getElementById('preview-container').style.display = 'none';
-                document.getElementById('image-preview').src = '';
+                const cropWrapper = document.getElementById('crop-editor-wrapper');
+                if (cropWrapper) cropWrapper.style.display = 'none';
+                const dragZone = document.getElementById('drag-zone');
+                if (dragZone) dragZone.style.display = 'block';
+                const imgCrop = document.getElementById('image-crop-source');
+                if (imgCrop) imgCrop.src = '';
+                hasLoadedCropImage = false;
+                const statusMsg = document.getElementById('ai-status-msg');
+                if (statusMsg) statusMsg.style.display = 'none';
+                const topBtn = document.getElementById('btn-ai-transcribe');
+                if (topBtn) topBtn.querySelector('span').textContent = 'Auto-Transcribir con IA';
             }
         }
 
@@ -1835,9 +2095,8 @@
             }, 2000);
         }
 
-        // Adjuntar automáticamente la foto recibida desde el teléfono, abrir modal de registro y auto-transcribir con IA
+        // Adjuntar automáticamente la foto recibida desde el teléfono y activar el selector de párrafos
         function fetchAndAttachMobilePhoto(photoUrl) {
-            // Cerrar el modal del QR si estaba abierto
             closeModal('qrModal');
 
             fetch(photoUrl)
@@ -1849,22 +2108,257 @@
                     
                     const fileInput = document.getElementById('f-imagen_pagina');
                     fileInput.files = container.files;
-                    fileInput.dispatchEvent(new Event('change'));
+                    loadCropImage(file);
 
-                    // Abrir la pestaña / modal de registro en la computadora
+                    // Abrir la pestaña de registro en la computadora
                     openModal('registerModal');
 
-                    const regModalContainer = document.querySelector('#registerModal .modal-container');
-                    if (regModalContainer) regModalContainer.scrollTop = 0;
+                    showToast('📱 ¡Foto del teléfono recibida! Selecciona el registro en el recuadro y pulsa Transcribir.');
 
-                    showToast('📱 ¡Foto del teléfono recibida! Iniciando transcripción por IA...');
-
-                    // Disparar la transcripción por IA de forma 100% automática sin requerir clics
+                    // Desplazarse suavemente al panel del recuadro de recorte
                     setTimeout(() => {
-                        handleAITranscription();
+                        const cropWrapper = document.getElementById('crop-editor-wrapper');
+                        if (cropWrapper) cropWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }, 400);
                 })
                 .catch(err => console.error('Error al adjuntar foto móvil:', err));
+        }
+
+        // ========================================================
+        // CONTROLADOR DEL SELECTOR INTERACTIVO DE PÁRRAFOS (RECUADRO)
+        // ========================================================
+        let hasLoadedCropImage = false;
+        let cropState = {
+            x: 2,   // %
+            y: 3,   // %
+            w: 96,  // %
+            h: 29   // % (aprox tercio superior)
+        };
+
+        let isDraggingCrop = false;
+        let cropDragMode = null; // 'move', 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'draw'
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialCropState = null;
+
+        function loadCropImage(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const img = document.getElementById('image-crop-source');
+                img.onload = () => {
+                    hasLoadedCropImage = true;
+                    document.getElementById('crop-editor-wrapper').style.display = 'block';
+                    document.getElementById('drag-zone').style.display = 'none';
+                    setCropPreset(2, 3, 96, 29, '1º Registro (Arriba)', 'btn-crop-p1');
+
+                    const topBtn = document.getElementById('btn-ai-transcribe');
+                    if (topBtn) topBtn.querySelector('span').textContent = 'Auto-Transcribir Párrafo';
+                };
+                img.src = evt.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setCropPreset(x, y, w, h, label, activeBtnId) {
+            cropState = { x, y, w, h };
+            
+            document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
+            if (activeBtnId) {
+                const b = document.getElementById(activeBtnId);
+                if (b) b.classList.add('active');
+            }
+
+            const badge = document.getElementById('crop-badge-text');
+            if (badge) badge.textContent = label;
+
+            updateCropBoxUI();
+        }
+
+        function updateCropBoxUI() {
+            const img = document.getElementById('image-crop-source');
+            const box = document.getElementById('crop-box');
+            if (!img || !box || !img.offsetWidth) return;
+
+            const imgW = img.offsetWidth;
+            const imgH = img.offsetHeight;
+
+            // Clamping para garantizar que el recuadro siempre permanezca dentro de la foto
+            cropState.w = Math.max(5, Math.min(100, cropState.w));
+            cropState.h = Math.max(5, Math.min(100, cropState.h));
+            cropState.x = Math.max(0, Math.min(100 - cropState.w, cropState.x));
+            cropState.y = Math.max(0, Math.min(100 - cropState.h, cropState.y));
+
+            box.style.left = `${(cropState.x * imgW) / 100}px`;
+            box.style.top = `${(cropState.y * imgH) / 100}px`;
+            box.style.width = `${(cropState.w * imgW) / 100}px`;
+            box.style.height = `${(cropState.h * imgH) / 100}px`;
+
+            updateCropLiveThumbnail();
+        }
+
+        function updateCropLiveThumbnail() {
+            const img = document.getElementById('image-crop-source');
+            const thumbCanvas = document.getElementById('crop-live-thumb');
+            if (!img || !thumbCanvas || !img.naturalWidth) return;
+
+            const ctx = thumbCanvas.getContext('2d');
+            const sx = (cropState.x / 100) * img.naturalWidth;
+            const sy = (cropState.y / 100) * img.naturalHeight;
+            const sw = (cropState.w / 100) * img.naturalWidth;
+            const sh = (cropState.h / 100) * img.naturalHeight;
+
+            ctx.clearRect(0, 0, thumbCanvas.width, thumbCanvas.height);
+            if (sw > 0 && sh > 0) {
+                ctx.drawImage(img, sx, sy, sw, sh, 0, 0, thumbCanvas.width, thumbCanvas.height);
+            }
+        }
+
+        // Obtener el recorte de alta resolución del párrafo seleccionado como archivo Blob JPEG
+        function getActiveCropBlob(callback) {
+            const img = document.getElementById('image-crop-source');
+            const fileInput = document.getElementById('f-imagen_pagina');
+            if (!hasLoadedCropImage || !img || !img.naturalWidth) {
+                callback(fileInput.files ? fileInput.files[0] : null);
+                return;
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const sx = (cropState.x / 100) * img.naturalWidth;
+            const sy = (cropState.y / 100) * img.naturalHeight;
+            const sw = (cropState.w / 100) * img.naturalWidth;
+            const sh = (cropState.h / 100) * img.naturalHeight;
+
+            canvas.width = Math.max(20, Math.round(sw));
+            canvas.height = Math.max(20, Math.round(sh));
+
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                callback(blob);
+            }, 'image/jpeg', 0.92);
+        }
+
+        function initCropEditorEvents() {
+            const container = document.getElementById('crop-container');
+            const box = document.getElementById('crop-box');
+            const img = document.getElementById('image-crop-source');
+
+            function onPointerDown(e) {
+                if (!hasLoadedCropImage) return;
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                if (e.target.classList.contains('crop-handle')) {
+                    cropDragMode = e.target.dataset.handle;
+                } else if (e.target === box || box.contains(e.target)) {
+                    cropDragMode = 'move';
+                } else if (e.target === container || e.target === img) {
+                    cropDragMode = 'draw';
+                    const rect = img.getBoundingClientRect();
+                    const clickX = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+                    const clickY = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+                    cropState = { x: clickX, y: clickY, w: 5, h: 5 };
+                    document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
+                    document.getElementById('crop-badge-text').textContent = 'Párrafo Personalizado';
+                } else {
+                    return;
+                }
+
+                isDraggingCrop = true;
+                dragStartX = clientX;
+                dragStartY = clientY;
+                initialCropState = { ...cropState };
+                e.preventDefault();
+            }
+
+            function onPointerMove(e) {
+                if (!isDraggingCrop || !hasLoadedCropImage) return;
+
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                const imgW = img.offsetWidth;
+                const imgH = img.offsetHeight;
+                if (!imgW || !imgH) return;
+
+                const deltaX = ((clientX - dragStartX) / imgW) * 100;
+                const deltaY = ((clientY - dragStartY) / imgH) * 100;
+
+                if (cropDragMode === 'move') {
+                    cropState.x = Math.max(0, Math.min(100 - initialCropState.w, initialCropState.x + deltaX));
+                    cropState.y = Math.max(0, Math.min(100 - initialCropState.h, initialCropState.y + deltaY));
+                } else if (cropDragMode === 'se' || cropDragMode === 'draw') {
+                    cropState.w = Math.max(5, Math.min(100 - initialCropState.x, initialCropState.w + deltaX));
+                    cropState.h = Math.max(5, Math.min(100 - initialCropState.y, initialCropState.h + deltaY));
+                } else if (cropDragMode === 'e') {
+                    cropState.w = Math.max(5, Math.min(100 - initialCropState.x, initialCropState.w + deltaX));
+                } else if (cropDragMode === 's') {
+                    cropState.h = Math.max(5, Math.min(100 - initialCropState.y, initialCropState.h + deltaY));
+                } else if (cropDragMode === 'nw') {
+                    const newX = Math.min(initialCropState.x + initialCropState.w - 5, Math.max(0, initialCropState.x + deltaX));
+                    cropState.w = initialCropState.w - (newX - initialCropState.x);
+                    cropState.x = newX;
+                    const newY = Math.min(initialCropState.y + initialCropState.h - 5, Math.max(0, initialCropState.y + deltaY));
+                    cropState.h = initialCropState.h - (newY - initialCropState.y);
+                    cropState.y = newY;
+                } else if (cropDragMode === 'n') {
+                    const newY = Math.min(initialCropState.y + initialCropState.h - 5, Math.max(0, initialCropState.y + deltaY));
+                    cropState.h = initialCropState.h - (newY - initialCropState.y);
+                    cropState.y = newY;
+                } else if (cropDragMode === 'ne') {
+                    const newY = Math.min(initialCropState.y + initialCropState.h - 5, Math.max(0, initialCropState.y + deltaY));
+                    cropState.h = initialCropState.h - (newY - initialCropState.y);
+                    cropState.y = newY;
+                    cropState.w = Math.max(5, Math.min(100 - initialCropState.x, initialCropState.w + deltaX));
+                } else if (cropDragMode === 'sw') {
+                    const newX = Math.min(initialCropState.x + initialCropState.w - 5, Math.max(0, initialCropState.x + deltaX));
+                    cropState.w = initialCropState.w - (newX - initialCropState.x);
+                    cropState.x = newX;
+                    cropState.h = Math.max(5, Math.min(100 - initialCropState.y, initialCropState.h + deltaY));
+                } else if (cropDragMode === 'w') {
+                    const newX = Math.min(initialCropState.x + initialCropState.w - 5, Math.max(0, initialCropState.x + deltaX));
+                    cropState.w = initialCropState.w - (newX - initialCropState.x);
+                    cropState.x = newX;
+                }
+
+                document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('crop-badge-text').textContent = 'Párrafo Ajustado';
+
+                updateCropBoxUI();
+            }
+
+            function onPointerUp() {
+                isDraggingCrop = false;
+                cropDragMode = null;
+            }
+
+            container.addEventListener('mousedown', onPointerDown);
+            container.addEventListener('touchstart', onPointerDown, { passive: false });
+
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('touchmove', onPointerMove, { passive: false });
+
+            window.addEventListener('mouseup', onPointerUp);
+            window.addEventListener('touchend', onPointerUp);
+
+            window.addEventListener('resize', updateCropBoxUI);
+
+            // Botones de presets
+            document.getElementById('btn-crop-p1').addEventListener('click', () => {
+                setCropPreset(2, 3, 96, 29, '1º Registro (Arriba)', 'btn-crop-p1');
+            });
+            document.getElementById('btn-crop-p2').addEventListener('click', () => {
+                setCropPreset(2, 35, 96, 29, '2º Registro (Medio)', 'btn-crop-p2');
+            });
+            document.getElementById('btn-crop-p3').addEventListener('click', () => {
+                setCropPreset(2, 67, 96, 30, '3º Registro (Abajo)', 'btn-crop-p3');
+            });
+            document.getElementById('btn-crop-full').addEventListener('click', () => {
+                setCropPreset(0, 0, 100, 100, 'Página Completa', 'btn-crop-full');
+            });
         }
 
         // Manejo de envío de formulario para guardar un acta nueva
@@ -1878,6 +2372,20 @@
 
             const formData = new FormData(form);
 
+            const guardarSoloRecorte = document.getElementById('f-guardar-solo-recorte');
+            if (guardarSoloRecorte && guardarSoloRecorte.checked && hasLoadedCropImage) {
+                getActiveCropBlob(blob => {
+                    if (blob) {
+                        formData.set('imagen_pagina', blob, 'acta_recorte.jpg');
+                    }
+                    sendActaFormData(formData, submitBtn);
+                });
+            } else {
+                sendActaFormData(formData, submitBtn);
+            }
+        }
+
+        function sendActaFormData(formData, submitBtn) {
             fetch('/api/actas', {
                 method: 'POST',
                 headers: {
@@ -1944,13 +2452,14 @@
             });
         }
 
-        // Manejo de Transcripción con IA de imágenes manuscritas
+        // Manejo de Transcripción con IA de imágenes manuscritas (Párrafo Específico)
         function handleAITranscription() {
             const fileInput = document.getElementById('f-imagen_pagina');
             const btn = document.getElementById('btn-ai-transcribe');
+            const btnCrop = document.getElementById('btn-crop-transcribe');
             const statusMsg = document.getElementById('ai-status-msg');
 
-            if (!fileInput.files || !fileInput.files[0]) {
+            if (!hasLoadedCropImage && (!fileInput.files || !fileInput.files[0])) {
                 showToast('Por favor selecciona o arrastra primero la imagen de la página en la sección 5.', 'error');
                 const dragZone = document.getElementById('drag-zone');
                 if (dragZone) {
@@ -1961,93 +2470,115 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('imagen_pagina', fileInput.files[0]);
+            const setLoadingState = (loading) => {
+                btn.disabled = loading;
+                if (btnCrop) btnCrop.disabled = loading;
 
-            btn.disabled = true;
-            btn.innerHTML = `
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-                <span>Analizando caligrafía...</span>
-            `;
+                if (loading) {
+                    const spinner = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>`;
+                    btn.innerHTML = `${spinner} <span>Analizando párrafo...</span>`;
+                    if (btnCrop) btnCrop.innerHTML = `${spinner} <span>Transcribiendo...</span>`;
+                    
+                    statusMsg.style.display = 'block';
+                    statusMsg.style.background = 'rgba(99, 102, 241, 0.15)';
+                    statusMsg.style.color = '#818cf8';
+                    statusMsg.textContent = '🧠 Analizando caligrafía del párrafo seleccionado con Visión por IA (evitando mezclar registros)...';
+                } else {
+                    btn.innerHTML = `
+                        <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+                        <span>Auto-Transcribir Párrafo</span>
+                    `;
+                    if (btnCrop) btnCrop.innerHTML = `
+                        <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+                        <span>Transcribir Párrafo Seleccionado</span>
+                    `;
+                }
+            };
 
-            statusMsg.style.display = 'block';
-            statusMsg.style.background = 'rgba(99, 102, 241, 0.15)';
-            statusMsg.style.color = '#818cf8';
-            statusMsg.textContent = '🧠 Analizando trazos de letra cursiva manuscrita con Visión por IA...';
+            setLoadingState(true);
 
-            fetch('/api/actas/transcribir-imagen', {
-                method: 'POST',
-                headers: { 'Accept': 'application/json' },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(resData => {
-                if (!resData.success || !resData.data) {
-                    throw new Error(resData.message || 'No se logró transcribir la imagen.');
+            getActiveCropBlob(blobToSend => {
+                const formData = new FormData();
+                if (blobToSend) {
+                    formData.append('imagen_pagina', blobToSend, 'parrafo_seleccionado.jpg');
+                } else {
+                    formData.append('imagen_pagina', fileInput.files[0]);
                 }
 
-                const d = resData.data;
+                fetch('/api/actas/transcribir-imagen', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(resData => {
+                    if (!resData.success || !resData.data) {
+                        throw new Error(resData.message || 'No se logró transcribir la imagen.');
+                    }
 
-                // Auto-llenar campos del formulario
-                if (d.numero_pagina) document.getElementById('f-numero_pagina').value = d.numero_pagina;
-                if (d.numero_acta) document.getElementById('f-numero_acta').value = d.numero_acta;
-                if (d.fecha_bautizo) document.getElementById('f-fecha_bautizo').value = d.fecha_bautizo;
-                if (d.ministro) document.getElementById('f-ministro').value = d.ministro;
+                    const d = resData.data;
 
-                if (d.bautizado) {
-                    if (d.bautizado.nombres) document.getElementById('f-bautizado-nombres').value = d.bautizado.nombres;
-                    if (d.bautizado.apellidos) document.getElementById('f-bautizado-apellidos').value = d.bautizado.apellidos;
-                    if (d.bautizado.fecha_nacimiento) document.getElementById('f-bautizado-fecha_nacimiento').value = d.bautizado.fecha_nacimiento.trim();
-                    if (d.bautizado.lugar_nacimiento) document.getElementById('f-bautizado-lugar_nacimiento').value = d.bautizado.lugar_nacimiento;
-                    if (d.bautizado.genero) document.getElementById('f-bautizado-genero').value = d.bautizado.genero;
-                }
+                    // Auto-llenar campos del formulario
+                    if (d.numero_pagina) document.getElementById('f-numero_pagina').value = d.numero_pagina;
+                    if (d.numero_acta) document.getElementById('f-numero_acta').value = d.numero_acta;
+                    if (d.fecha_bautizo) document.getElementById('f-fecha_bautizo').value = d.fecha_bautizo;
+                    if (d.ministro) document.getElementById('f-ministro').value = d.ministro;
 
-                if (d.padre) {
-                    if (d.padre.nombres) document.querySelector('input[name="padre[nombres]"]').value = d.padre.nombres;
-                    if (d.padre.apellidos) document.querySelector('input[name="padre[apellidos]"]').value = d.padre.apellidos;
-                    if (d.padre.cedula) document.querySelector('input[name="padre[cedula]"]').value = d.padre.cedula;
-                }
+                    if (d.bautizado) {
+                        if (d.bautizado.nombres) document.getElementById('f-bautizado-nombres').value = d.bautizado.nombres;
+                        if (d.bautizado.apellidos) document.getElementById('f-bautizado-apellidos').value = d.bautizado.apellidos;
+                        if (d.bautizado.fecha_nacimiento) document.getElementById('f-bautizado-fecha_nacimiento').value = d.bautizado.fecha_nacimiento.trim();
+                        if (d.bautizado.lugar_nacimiento) document.getElementById('f-bautizado-lugar_nacimiento').value = d.bautizado.lugar_nacimiento;
+                        if (d.bautizado.genero) document.getElementById('f-bautizado-genero').value = d.bautizado.genero;
+                    }
 
-                if (d.madre) {
-                    if (d.madre.nombres) document.querySelector('input[name="madre[nombres]"]').value = d.madre.nombres;
-                    if (d.madre.apellidos) document.querySelector('input[name="madre[apellidos]"]').value = d.madre.apellidos;
-                    if (d.madre.cedula) document.querySelector('input[name="madre[cedula]"]').value = d.madre.cedula;
-                }
+                    if (d.padre) {
+                        if (d.padre.nombres) document.querySelector('input[name="padre[nombres]"]').value = d.padre.nombres;
+                        if (d.padre.apellidos) document.querySelector('input[name="padre[apellidos]"]').value = d.padre.apellidos;
+                        if (d.padre.cedula) document.querySelector('input[name="padre[cedula]"]').value = d.padre.cedula;
+                    }
 
-                if (d.padrino) {
-                    if (d.padrino.nombres) document.querySelector('input[name="padrino[nombres]"]').value = d.padrino.nombres;
-                    if (d.padrino.apellidos) document.querySelector('input[name="padrino[apellidos]"]').value = d.padrino.apellidos;
-                }
+                    if (d.madre) {
+                        if (d.madre.nombres) document.querySelector('input[name="madre[nombres]"]').value = d.madre.nombres;
+                        if (d.madre.apellidos) document.querySelector('input[name="madre[apellidos]"]').value = d.madre.apellidos;
+                        if (d.madre.cedula) document.querySelector('input[name="madre[cedula]"]').value = d.madre.cedula;
+                    }
 
-                if (d.madrina) {
-                    if (d.madrina.nombres) document.querySelector('input[name="madrina[nombres]"]').value = d.madrina.nombres;
-                    if (d.madrina.apellidos) document.querySelector('input[name="madrina[apellidos]"]').value = d.madrina.apellidos;
-                }
+                    if (d.padrino) {
+                        if (d.padrino.nombres) document.querySelector('input[name="padrino[nombres]"]').value = d.padrino.nombres;
+                        if (d.padrino.apellidos) document.querySelector('input[name="padrino[apellidos]"]').value = d.padrino.apellidos;
+                    }
 
-                if (d.notas_marginales) {
-                    const notasInput = document.querySelector('textarea[name="notas_marginales"]');
-                    if (notasInput) notasInput.value = d.notas_marginales;
-                }
+                    if (d.madrina) {
+                        if (d.madrina.nombres) document.querySelector('input[name="madrina[nombres]"]').value = d.madrina.nombres;
+                        if (d.madrina.apellidos) document.querySelector('input[name="madrina[apellidos]"]').value = d.madrina.apellidos;
+                    }
 
-                statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
-                statusMsg.style.color = '#4ade80';
-                statusMsg.textContent = '✨ ¡Campos auto-completados por IA con éxito! Revisa la información extraída antes de guardar.';
-                
-                showToast('Transcripción completada por IA. Revisa y confirma los campos.');
-            })
-            .catch(err => {
-                console.error(err);
-                statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
-                statusMsg.style.color = '#f87171';
-                statusMsg.textContent = '⚠️ Error en transcripción: ' + (err.message || 'No se pudo procesar la imagen.');
-                showToast('Error al transcribir la imagen.', 'error');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = `
-                    <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-                    <span>Auto-Transcribir con IA</span>
-                `;
+                    if (d.notas_marginales) {
+                        const notasInput = document.querySelector('textarea[name="notas_marginales"]');
+                        if (notasInput) notasInput.value = d.notas_marginales;
+                    }
+
+                    statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
+                    statusMsg.style.color = '#4ade80';
+                    statusMsg.textContent = '✨ ¡Párrafo transcrito con éxito por IA! Revisa la información antes de guardar.';
+                    
+                    showToast('Transcripción de párrafo completada. Revisa los datos.');
+
+                    // Desplazarse suavemente arriba para ver los campos completados
+                    const regModalContainer = document.querySelector('#registerModal .modal-container');
+                    if (regModalContainer) regModalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusMsg.style.background = 'rgba(239, 68, 68, 0.15)';
+                    statusMsg.style.color = '#f87171';
+                    statusMsg.textContent = '⚠️ Error en transcripción: ' + (err.message || 'No se pudo procesar el párrafo.');
+                    showToast('Error al transcribir el párrafo.', 'error');
+                })
+                .finally(() => {
+                    setLoadingState(false);
+                });
             });
         }
 
