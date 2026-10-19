@@ -288,9 +288,11 @@ class ActaBautizoController extends Controller
     {
         $request->validate([
             'imagen_pagina' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240',
+            'parrafo_index' => 'nullable|string|max:10',
         ]);
 
-        $result = $transcriber->transcribir($request->file('imagen_pagina'));
+        $parrafoIndex = $request->input('parrafo_index', 1);
+        $result = $transcriber->transcribir($request->file('imagen_pagina'), $parrafoIndex);
 
         return response()->json($result);
     }

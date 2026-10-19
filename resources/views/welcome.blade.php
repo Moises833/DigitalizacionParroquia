@@ -768,6 +768,144 @@
         .crop-handle.handle-sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
         .crop-handle.handle-w  { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
 
+        /* Guías visuales de párrafos en la página */
+        .crop-guide-slot {
+            position: absolute;
+            border: 2px dashed rgba(255, 255, 255, 0.35);
+            background: rgba(99, 102, 241, 0.05);
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            z-index: 5;
+        }
+
+        .crop-guide-slot:hover {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .crop-guide-slot.is-active {
+            display: none;
+        }
+
+        .crop-guide-slot.is-saved {
+            border-color: #22c55e;
+            background: rgba(34, 197, 94, 0.12);
+        }
+
+        .guide-slot-tag {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(15, 23, 42, 0.85);
+            color: #94a3b8;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            letter-spacing: 0.3px;
+        }
+
+        .crop-guide-slot.is-saved .guide-slot-tag {
+            background: #16a34a;
+            color: #ffffff;
+            border-color: #22c55e;
+        }
+
+        /* Indicador de progreso de la página */
+        .crop-progress-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.35);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .crop-progress-pill.completed {
+            background: rgba(34, 197, 94, 0.18);
+            color: #4ade80;
+            border-color: rgba(34, 197, 94, 0.4);
+        }
+
+        .slot-pill {
+            font-size: 0.68rem;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+            background: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+        }
+
+        .slot-pill.saved {
+            background: #16a34a;
+            color: #ffffff;
+        }
+
+        /* Banner de acción tras guardar un registro */
+        .multi-record-banner {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+            border: 1.5px solid #6366f1;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        body.light-mode .multi-record-banner {
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            border-color: #6366f1;
+            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+        }
+
+        .multi-record-content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .multi-record-icon {
+            font-size: 1.8rem;
+            width: 44px;
+            height: 44px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .multi-record-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
         .crop-footer {
             display: flex;
             flex-wrap: wrap;
@@ -1387,6 +1525,25 @@
             </div>
             <form id="add-acta-form" enctype="multipart/form-data">
                 <div class="modal-body">
+                    <!-- Banner de Acción Multi-Registro de la Misma Página -->
+                    <div id="multi-record-banner" class="multi-record-banner" style="display: none;">
+                        <div class="multi-record-content">
+                            <div class="multi-record-icon">🎉</div>
+                            <div>
+                                <h4 id="multi-record-title" style="margin: 0; font-size: 1rem; font-weight: 700; color: #4ade80;">¡Registro Guardado con Éxito!</h4>
+                                <p id="multi-record-msg" style="margin: 4px 0 0 0; font-size: 0.83rem; color: var(--text-secondary);">Has guardado 1 de 3 registros de esta página física.</p>
+                            </div>
+                        </div>
+                        <div class="multi-record-actions">
+                            <button type="button" class="btn" id="btn-next-paragraph" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; font-weight: 600; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                                👉 Transcribir Siguiente Registro (2º)
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btn-finish-page-modal" style="padding: 8px 14px; cursor: pointer;">
+                                Terminar y Cerrar
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Banner Asistente IA -->
                     <div class="ai-transcribe-box" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(168, 85, 247, 0.35); border-radius: 12px; padding: 16px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 10px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
@@ -1550,21 +1707,27 @@
                         <!-- Editor de Recorte y Selección de Párrafo (1 de los 3 registros) -->
                         <div class="crop-editor-wrapper" id="crop-editor-wrapper" style="display: none;">
                             <div class="crop-toolbar">
-                                <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                     <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
                                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14M18 22V8a2 2 0 0 0-2-2H2"/></svg>
-                                        Seleccionar Registro en la Página:
+                                        Registros en la Página:
                                     </span>
+                                    <div class="crop-progress-pill" id="crop-page-progress">
+                                        <span id="crop-page-status-text">Página: 0 de 3 guardados</span>
+                                    </div>
                                 </div>
                                 <div class="crop-preset-group">
                                     <button type="button" class="crop-preset-btn active" id="btn-crop-p1" title="Seleccionar el 1º tercio superior de la página">
                                         <span>1º Registro (Arriba)</span>
+                                        <span class="slot-pill" id="pill-p1">Pendiente</span>
                                     </button>
                                     <button type="button" class="crop-preset-btn" id="btn-crop-p2" title="Seleccionar el 2º tercio medio de la página">
                                         <span>2º Registro (Medio)</span>
+                                        <span class="slot-pill" id="pill-p2">Pendiente</span>
                                     </button>
                                     <button type="button" class="crop-preset-btn" id="btn-crop-p3" title="Seleccionar el 3º tercio inferior de la página">
                                         <span>3º Registro (Abajo)</span>
+                                        <span class="slot-pill" id="pill-p3">Pendiente</span>
                                     </button>
                                     <button type="button" class="crop-preset-btn" id="btn-crop-full" title="Seleccionar toda la página completa">
                                         <span>Página Completa</span>
@@ -1576,13 +1739,26 @@
                             </div>
 
                             <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 10px 0;">
-                                💡 <em>Arrastra o redimensiona el recuadro interactivo sobre el párrafo del acta que deseas transcribir para que no se mezclen los datos de los otros bautizos de la página.</em>
+                                💡 <em>Cada página contiene hasta 3 registros. Haz clic en las guías o en los botones para seleccionar cada párrafo, transcribirlo con IA y guardarlo por separado sin perder la imagen.</em>
                             </p>
 
-                            <!-- Contenedor con Recuadro Interactivo -->
+                            <!-- Contenedor con Recuadro Interactivo y Guías de los 3 Párrafos -->
                             <div class="crop-container-outer">
                                 <div class="crop-container" id="crop-container">
                                     <img src="" alt="Folio del Libro" class="crop-image" id="image-crop-source">
+                                    
+                                    <!-- Guías visuales interactivas para cada uno de los 3 registros -->
+                                    <div class="crop-guide-slot" id="guide-slot-1" data-slot="1" title="Clic para seleccionar el 1º Registro (Arriba)">
+                                        <span class="guide-slot-tag" id="guide-tag-1">1º Registro</span>
+                                    </div>
+                                    <div class="crop-guide-slot" id="guide-slot-2" data-slot="2" title="Clic para seleccionar el 2º Registro (Medio)">
+                                        <span class="guide-slot-tag" id="guide-tag-2">2º Registro</span>
+                                    </div>
+                                    <div class="crop-guide-slot" id="guide-slot-3" data-slot="3" title="Clic para seleccionar el 3º Registro (Abajo)">
+                                        <span class="guide-slot-tag" id="guide-tag-3">3º Registro</span>
+                                    </div>
+
+                                    <!-- Recuadro interactivo activo con 8 puntos de ajuste -->
                                     <div class="crop-box" id="crop-box">
                                         <span class="crop-badge" id="crop-badge-text">1º Registro Seleccionado</span>
                                         <div class="crop-handle handle-nw" data-handle="nw"></div>
@@ -1602,7 +1778,7 @@
                                 <div class="crop-preview-mini">
                                     <canvas id="crop-live-thumb" width="130" height="75" style="border: 1px solid var(--card-border); border-radius: 6px; background: #0f172a; object-fit: contain;"></canvas>
                                     <div>
-                                        <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);">Párrafo a procesar por IA</div>
+                                        <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary);" id="crop-preview-label">Párrafo a procesar por IA (1º)</div>
                                         <label style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; cursor: pointer;">
                                             <input type="checkbox" id="f-guardar-solo-recorte" checked style="cursor: pointer;">
                                             <span>Guardar este recorte como la foto oficial del acta</span>
@@ -1612,17 +1788,26 @@
 
                                 <button type="button" class="btn" id="btn-crop-transcribe" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);">
                                     <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-                                    <span>Transcribir Párrafo Seleccionado</span>
+                                    <span id="btn-crop-transcribe-text">Transcribir 1º Registro con IA</span>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('registerModal')">Cancelar</button>
-                    <button type="submit" class="btn">
-                        Guardar Registro
-                    </button>
+                <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                        📄 <span id="footer-status-text">Una sola foto permite registrar hasta 3 bautizos.</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('registerModal')">Cancelar</button>
+                        <button type="submit" class="btn btn-secondary" id="btn-save-record-only" title="Guardar este registro en el sistema">
+                            Guardar Registro
+                        </button>
+                        <button type="button" class="btn" id="btn-save-and-advance" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer;" title="Guardar este registro y pasar directamente al siguiente párrafo de la página">
+                            <span id="btn-advance-text">Guardar y Pasar al 2º Registro</span>
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M5 13h11.86l-5.43 5.43 1.42 1.42L21.14 12l-8.29-8.29-1.42 1.42L16.86 11H5v2z"/></svg>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1702,7 +1887,17 @@
 
             // Form Submit Handler
             const form = document.getElementById('add-acta-form');
-            form.addEventListener('submit', handleFormSubmit);
+            form.addEventListener('submit', (e) => handleFormSubmit(e, false));
+
+            const btnSaveAdvance = document.getElementById('btn-save-and-advance');
+            if (btnSaveAdvance) {
+                btnSaveAdvance.addEventListener('click', (e) => handleFormSubmit(e, true));
+            }
+
+            const btnFinishModal = document.getElementById('btn-finish-page-modal');
+            if (btnFinishModal) {
+                btnFinishModal.addEventListener('click', () => closeModal('registerModal'));
+            }
 
             // Theme Toggle Handler
             const themeToggleBtn = document.getElementById('themeToggleBtn');
@@ -1743,6 +1938,17 @@
             document.getElementById(modalId).classList.remove('active');
             if(modalId === 'registerModal') {
                 document.getElementById('add-acta-form').reset();
+                originalImageFile = null;
+                savedRecordsThisPage = 0;
+                currentParagraph = 1;
+
+                pageParagraphs = {
+                    1: { x: 2, y: 3, w: 96, h: 29, saved: false, label: '1º Registro (Arriba)' },
+                    2: { x: 2, y: 35, w: 96, h: 29, saved: false, label: '2º Registro (Medio)' },
+                    3: { x: 2, y: 67, w: 96, h: 30, saved: false, label: '3º Registro (Abajo)' },
+                    'full': { x: 0, y: 0, w: 100, h: 100, saved: false, label: 'Página Completa' }
+                };
+
                 const cropWrapper = document.getElementById('crop-editor-wrapper');
                 if (cropWrapper) cropWrapper.style.display = 'none';
                 const dragZone = document.getElementById('drag-zone');
@@ -1750,10 +1956,16 @@
                 const imgCrop = document.getElementById('image-crop-source');
                 if (imgCrop) imgCrop.src = '';
                 hasLoadedCropImage = false;
+
+                const banner = document.getElementById('multi-record-banner');
+                if (banner) banner.style.display = 'none';
+
                 const statusMsg = document.getElementById('ai-status-msg');
                 if (statusMsg) statusMsg.style.display = 'none';
                 const topBtn = document.getElementById('btn-ai-transcribe');
                 if (topBtn) topBtn.querySelector('span').textContent = 'Auto-Transcribir con IA';
+
+                updatePageProgressUI();
             }
         }
 
@@ -2125,14 +2337,26 @@
         }
 
         // ========================================================
-        // CONTROLADOR DEL SELECTOR INTERACTIVO DE PÁRRAFOS (RECUADRO)
+        // CONTROLADOR MULTI-REGISTRO Y RECUADRO DE PÁRRAFOS (HASTA 3 POR PÁGINA)
         // ========================================================
         let hasLoadedCropImage = false;
+        let originalImageFile = null;
+        let savedRecordsThisPage = 0;
+        let currentParagraph = 1; // 1, 2, 3 o 'full'
+
+        // Coordenadas y estado de guardado independiente para cada uno de los 3 registros de la página
+        let pageParagraphs = {
+            1: { x: 2, y: 3,  w: 96, h: 29, saved: false, label: '1º Registro (Arriba)' },
+            2: { x: 2, y: 35, w: 96, h: 29, saved: false, label: '2º Registro (Medio)' },
+            3: { x: 2, y: 67, w: 96, h: 30, saved: false, label: '3º Registro (Abajo)' },
+            'full': { x: 0, y: 0, w: 100, h: 100, saved: false, label: 'Página Completa' }
+        };
+
         let cropState = {
-            x: 2,   // %
-            y: 3,   // %
-            w: 96,  // %
-            h: 29   // % (aprox tercio superior)
+            x: 2,
+            y: 3,
+            w: 96,
+            h: 29
         };
 
         let isDraggingCrop = false;
@@ -2143,6 +2367,22 @@
 
         function loadCropImage(file) {
             if (!file) return;
+            originalImageFile = file;
+            savedRecordsThisPage = 0;
+
+            // Restablecer posiciones y estados de guardado
+            pageParagraphs = {
+                1: { x: 2, y: 3,  w: 96, h: 29, saved: false, label: '1º Registro (Arriba)' },
+                2: { x: 2, y: 35, w: 96, h: 29, saved: false, label: '2º Registro (Medio)' },
+                3: { x: 2, y: 67, w: 96, h: 30, saved: false, label: '3º Registro (Abajo)' },
+                'full': { x: 0, y: 0, w: 100, h: 100, saved: false, label: 'Página Completa' }
+            };
+
+            const banner = document.getElementById('multi-record-banner');
+            if (banner) banner.style.display = 'none';
+
+            updatePageProgressUI();
+
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const img = document.getElementById('image-crop-source');
@@ -2150,29 +2390,126 @@
                     hasLoadedCropImage = true;
                     document.getElementById('crop-editor-wrapper').style.display = 'block';
                     document.getElementById('drag-zone').style.display = 'none';
-                    setCropPreset(2, 3, 96, 29, '1º Registro (Arriba)', 'btn-crop-p1');
-
-                    const topBtn = document.getElementById('btn-ai-transcribe');
-                    if (topBtn) topBtn.querySelector('span').textContent = 'Auto-Transcribir Párrafo';
+                    selectParagraph(1);
                 };
                 img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function setCropPreset(x, y, w, h, label, activeBtnId) {
-            cropState = { x, y, w, h };
-            
+        // Seleccionar y activar uno de los párrafos (1, 2, 3 o 'full')
+        function selectParagraph(slot) {
+            // Guardar coordenadas actuales en el párrafo anterior si estaba activo
+            if (pageParagraphs[currentParagraph]) {
+                pageParagraphs[currentParagraph].x = cropState.x;
+                pageParagraphs[currentParagraph].y = cropState.y;
+                pageParagraphs[currentParagraph].w = cropState.w;
+                pageParagraphs[currentParagraph].h = cropState.h;
+            }
+
+            currentParagraph = slot;
+            const target = pageParagraphs[slot] || pageParagraphs[1];
+            cropState = { x: target.x, y: target.y, w: target.w, h: target.h };
+
+            // Actualizar botones de preset
             document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
-            if (activeBtnId) {
-                const b = document.getElementById(activeBtnId);
+            const btnMap = {
+                1: 'btn-crop-p1',
+                2: 'btn-crop-p2',
+                3: 'btn-crop-p3',
+                'full': 'btn-crop-full'
+            };
+            if (btnMap[slot]) {
+                const b = document.getElementById(btnMap[slot]);
                 if (b) b.classList.add('active');
             }
 
+            // Actualizar etiqueta del recuadro
             const badge = document.getElementById('crop-badge-text');
-            if (badge) badge.textContent = label;
+            if (badge) {
+                const suffix = target.saved ? '✓ Guardado' : 'Seleccionado';
+                badge.textContent = `${target.label} - ${suffix}`;
+            }
 
+            const previewLabel = document.getElementById('crop-preview-label');
+            if (previewLabel) {
+                previewLabel.textContent = `Párrafo a procesar por IA (${slot === 'full' ? 'Página Completa' : slot + 'º Registro'})`;
+            }
+
+            const transcribeBtnText = document.getElementById('btn-crop-transcribe-text');
+            if (transcribeBtnText) {
+                transcribeBtnText.textContent = `Transcribir ${slot === 'full' ? 'Página' : slot + 'º Registro'} con IA`;
+            }
+
+            const topBtn = document.getElementById('btn-ai-transcribe');
+            if (topBtn) {
+                topBtn.querySelector('span').textContent = `Auto-Transcribir ${slot === 'full' ? 'Página' : slot + 'º Reg'}`;
+            }
+
+            updateAdvanceButtonText();
             updateCropBoxUI();
+        }
+
+        function getNextUnsavedSlot() {
+            if (currentParagraph === 1) {
+                return !pageParagraphs[2].saved ? 2 : (!pageParagraphs[3].saved ? 3 : null);
+            } else if (currentParagraph === 2) {
+                return !pageParagraphs[3].saved ? 3 : (!pageParagraphs[1].saved ? 1 : null);
+            } else if (currentParagraph === 3) {
+                return !pageParagraphs[1].saved ? 1 : (!pageParagraphs[2].saved ? 2 : null);
+            }
+            return !pageParagraphs[1].saved ? 1 : (!pageParagraphs[2].saved ? 2 : (!pageParagraphs[3].saved ? 3 : null));
+        }
+
+        function updateAdvanceButtonText() {
+            const btnAdvance = document.getElementById('btn-save-and-advance');
+            const advanceText = document.getElementById('btn-advance-text');
+            if (!btnAdvance || !advanceText) return;
+
+            const nextSlot = getNextUnsavedSlot();
+            if (nextSlot) {
+                btnAdvance.style.display = 'inline-flex';
+                advanceText.textContent = `Guardar y Pasar al ${nextSlot}º Registro`;
+            } else {
+                btnAdvance.style.display = 'none';
+            }
+        }
+
+        function updatePageProgressUI() {
+            const progressText = document.getElementById('crop-page-status-text');
+            const progressPill = document.getElementById('crop-page-progress');
+            const footerStatusText = document.getElementById('footer-status-text');
+
+            if (progressText) {
+                progressText.textContent = `Página: ${savedRecordsThisPage} de 3 guardados`;
+            }
+            if (progressPill) {
+                if (savedRecordsThisPage >= 3) {
+                    progressPill.classList.add('completed');
+                    progressText.textContent = '🎉 Página Completa: 3 de 3 guardados';
+                } else {
+                    progressPill.classList.remove('completed');
+                }
+            }
+            if (footerStatusText) {
+                footerStatusText.textContent = savedRecordsThisPage > 0 
+                    ? `${savedRecordsThisPage} de 3 bautizos guardados de esta página.` 
+                    : 'Una sola foto permite registrar hasta 3 bautizos.';
+            }
+
+            [1, 2, 3].forEach(slot => {
+                const pill = document.getElementById(`pill-p${slot}`);
+                if (!pill) return;
+                if (pageParagraphs[slot] && pageParagraphs[slot].saved) {
+                    pill.textContent = '✓ Guardado';
+                    pill.classList.add('saved');
+                } else {
+                    pill.textContent = 'Pendiente';
+                    pill.classList.remove('saved');
+                }
+            });
+
+            updateAdvanceButtonText();
         }
 
         function updateCropBoxUI() {
@@ -2189,10 +2526,45 @@
             cropState.x = Math.max(0, Math.min(100 - cropState.w, cropState.x));
             cropState.y = Math.max(0, Math.min(100 - cropState.h, cropState.y));
 
+            // Actualizar coordenadas en el slot activo
+            if (pageParagraphs[currentParagraph]) {
+                pageParagraphs[currentParagraph].x = cropState.x;
+                pageParagraphs[currentParagraph].y = cropState.y;
+                pageParagraphs[currentParagraph].w = cropState.w;
+                pageParagraphs[currentParagraph].h = cropState.h;
+            }
+
             box.style.left = `${(cropState.x * imgW) / 100}px`;
             box.style.top = `${(cropState.y * imgH) / 100}px`;
             box.style.width = `${(cropState.w * imgW) / 100}px`;
             box.style.height = `${(cropState.h * imgH) / 100}px`;
+
+            // Actualizar guías visuales de los 3 slots en la foto
+            [1, 2, 3].forEach(slot => {
+                const guide = document.getElementById(`guide-slot-${slot}`);
+                const tag = document.getElementById(`guide-tag-${slot}`);
+                if (!guide) return;
+
+                const p = pageParagraphs[slot];
+                guide.style.left = `${(p.x * imgW) / 100}px`;
+                guide.style.top = `${(p.y * imgH) / 100}px`;
+                guide.style.width = `${(p.w * imgW) / 100}px`;
+                guide.style.height = `${(p.h * imgH) / 100}px`;
+
+                if (slot === currentParagraph) {
+                    guide.classList.add('is-active');
+                } else {
+                    guide.classList.remove('is-active');
+                }
+
+                if (p.saved) {
+                    guide.classList.add('is-saved');
+                    if (tag) tag.textContent = `✓ ${slot}º Reg Guardado`;
+                } else {
+                    guide.classList.remove('is-saved');
+                    if (tag) tag.textContent = `${slot}º Registro`;
+                }
+            });
 
             updateCropLiveThumbnail();
         }
@@ -2217,9 +2589,8 @@
         // Obtener el recorte de alta resolución del párrafo seleccionado como archivo Blob JPEG
         function getActiveCropBlob(callback) {
             const img = document.getElementById('image-crop-source');
-            const fileInput = document.getElementById('f-imagen_pagina');
             if (!hasLoadedCropImage || !img || !img.naturalWidth) {
-                callback(fileInput.files ? fileInput.files[0] : null);
+                callback(originalImageFile || null);
                 return;
             }
 
@@ -2255,6 +2626,13 @@
                     cropDragMode = e.target.dataset.handle;
                 } else if (e.target === box || box.contains(e.target)) {
                     cropDragMode = 'move';
+                } else if (e.target.classList.contains('crop-guide-slot') || e.target.closest('.crop-guide-slot')) {
+                    const guideEl = e.target.classList.contains('crop-guide-slot') ? e.target : e.target.closest('.crop-guide-slot');
+                    const slotNum = parseInt(guideEl.dataset.slot, 10);
+                    if (slotNum) {
+                        selectParagraph(slotNum);
+                        return;
+                    }
                 } else if (e.target === container || e.target === img) {
                     cropDragMode = 'draw';
                     const rect = img.getBoundingClientRect();
@@ -2324,8 +2702,7 @@
                     cropState.x = newX;
                 }
 
-                document.querySelectorAll('.crop-preset-btn').forEach(btn => btn.classList.remove('active'));
-                document.getElementById('crop-badge-text').textContent = 'Párrafo Ajustado';
+                document.getElementById('crop-badge-text').textContent = `${pageParagraphs[currentParagraph] ? pageParagraphs[currentParagraph].label : 'Párrafo'} Ajustado`;
 
                 updateCropBoxUI();
             }
@@ -2346,29 +2723,88 @@
 
             window.addEventListener('resize', updateCropBoxUI);
 
+            // Clic en las guías visuales de los párrafos
+            [1, 2, 3].forEach(slot => {
+                const guide = document.getElementById(`guide-slot-${slot}`);
+                if (guide) {
+                    guide.addEventListener('click', () => selectParagraph(slot));
+                }
+            });
+
             // Botones de presets
-            document.getElementById('btn-crop-p1').addEventListener('click', () => {
-                setCropPreset(2, 3, 96, 29, '1º Registro (Arriba)', 'btn-crop-p1');
-            });
-            document.getElementById('btn-crop-p2').addEventListener('click', () => {
-                setCropPreset(2, 35, 96, 29, '2º Registro (Medio)', 'btn-crop-p2');
-            });
-            document.getElementById('btn-crop-p3').addEventListener('click', () => {
-                setCropPreset(2, 67, 96, 30, '3º Registro (Abajo)', 'btn-crop-p3');
-            });
-            document.getElementById('btn-crop-full').addEventListener('click', () => {
-                setCropPreset(0, 0, 100, 100, 'Página Completa', 'btn-crop-full');
-            });
+            document.getElementById('btn-crop-p1').addEventListener('click', () => selectParagraph(1));
+            document.getElementById('btn-crop-p2').addEventListener('click', () => selectParagraph(2));
+            document.getElementById('btn-crop-p3').addEventListener('click', () => selectParagraph(3));
+            document.getElementById('btn-crop-full').addEventListener('click', () => selectParagraph('full'));
         }
 
-        // Manejo de envío de formulario para guardar un acta nueva
-        function handleFormSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const submitBtn = form.querySelector('button[type="submit"]');
+        // Limpiar campos del formulario para el siguiente registro de la misma página
+        function prepareFormForNextParagraph(nextSlot) {
+            const banner = document.getElementById('multi-record-banner');
+            if (banner) banner.style.display = 'none';
+
+            // Limpiar datos personales del bautizo anterior, manteniendo Libro y Página
+            document.getElementById('f-numero_acta').value = '';
+            document.getElementById('f-fecha_bautizo').value = '';
+            document.getElementById('f-ministro').value = '';
+
+            document.getElementById('f-bautizado-nombres').value = '';
+            document.getElementById('f-bautizado-apellidos').value = '';
+            document.getElementById('f-bautizado-fecha_nacimiento').value = '';
+            document.getElementById('f-bautizado-lugar_nacimiento').value = '';
+            document.getElementById('f-bautizado-genero').value = 'M';
+
+            document.querySelector('input[name="padre[nombres]"]').value = '';
+            document.querySelector('input[name="padre[apellidos]"]').value = '';
+            document.querySelector('input[name="padre[cedula]"]').value = '';
+
+            document.querySelector('input[name="madre[nombres]"]').value = '';
+            document.querySelector('input[name="madre[apellidos]"]').value = '';
+            document.querySelector('input[name="madre[cedula]"]').value = '';
+
+            document.querySelector('input[name="padrino[nombres]"]').value = '';
+            document.querySelector('input[name="padrino[apellidos]"]').value = '';
+
+            document.querySelector('input[name="madrina[nombres]"]').value = '';
+            document.querySelector('input[name="madrina[apellidos]"]').value = '';
+
+            const notas = document.getElementById('f-notas_marginales');
+            if (notas) notas.value = '';
+
+            // Activar el recuadro del siguiente registro
+            selectParagraph(nextSlot);
+
+            const statusMsg = document.getElementById('ai-status-msg');
+            if (statusMsg) {
+                statusMsg.style.display = 'block';
+                statusMsg.style.background = 'rgba(99, 102, 241, 0.15)';
+                statusMsg.style.color = '#818cf8';
+                statusMsg.textContent = `📍 Recuadro ubicado en el ${nextSlot}º Registro. Pulsa "Auto-Transcribir con IA" o "Transcribir ${nextSlot}º Registro" para extraer sus datos.`;
+            }
+
+            showToast(`Listo para transcribir el ${nextSlot}º Registro de esta misma página.`);
+
+            // Desplazar la vista al editor de recorte
+            const cropWrapper = document.getElementById('crop-editor-wrapper');
+            if (cropWrapper) {
+                cropWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Manejo de envío de formulario para guardar un acta nueva (individual o pasar al siguiente)
+        function handleFormSubmit(e, advanceToNext = false) {
+            if (e) e.preventDefault();
+            const form = document.getElementById('add-acta-form');
+            const submitBtn = document.getElementById('btn-save-record-only');
+            const advanceBtn = document.getElementById('btn-save-and-advance');
             
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Guardando...';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Guardando...';
+            }
+            if (advanceBtn) {
+                advanceBtn.disabled = true;
+            }
 
             const formData = new FormData(form);
 
@@ -2376,16 +2812,21 @@
             if (guardarSoloRecorte && guardarSoloRecorte.checked && hasLoadedCropImage) {
                 getActiveCropBlob(blob => {
                     if (blob) {
-                        formData.set('imagen_pagina', blob, 'acta_recorte.jpg');
+                        formData.set('imagen_pagina', blob, `acta_recorte_p${currentParagraph}.jpg`);
+                    } else if (originalImageFile) {
+                        formData.set('imagen_pagina', originalImageFile);
                     }
-                    sendActaFormData(formData, submitBtn);
+                    sendActaFormData(formData, submitBtn, advanceBtn, advanceToNext);
                 });
             } else {
-                sendActaFormData(formData, submitBtn);
+                if (originalImageFile) {
+                    formData.set('imagen_pagina', originalImageFile);
+                }
+                sendActaFormData(formData, submitBtn, advanceBtn, advanceToNext);
             }
         }
 
-        function sendActaFormData(formData, submitBtn) {
+        function sendActaFormData(formData, submitBtn, advanceBtn, advanceToNext = false) {
             fetch('/api/actas', {
                 method: 'POST',
                 headers: {
@@ -2401,17 +2842,60 @@
                 return data;
             })
             .then(data => {
-                showToast(data.message || 'Acta de bautizo registrada con éxito.');
-                closeModal('registerModal');
+                // Registrar este registro como guardado
+                if (pageParagraphs[currentParagraph]) {
+                    pageParagraphs[currentParagraph].saved = true;
+                }
+                savedRecordsThisPage++;
+                updatePageProgressUI();
+                updateCropBoxUI();
                 fetchActas();
+
+                showToast(data.message || `Registro #${currentParagraph} de esta página guardado con éxito.`);
+
+                const nextSlot = getNextUnsavedSlot();
+
+                if (advanceToNext && nextSlot) {
+                    prepareFormForNextParagraph(nextSlot);
+                } else {
+                    // Mostrar banner de acción en la parte superior del formulario
+                    const banner = document.getElementById('multi-record-banner');
+                    const title = document.getElementById('multi-record-title');
+                    const msg = document.getElementById('multi-record-msg');
+                    const btnNext = document.getElementById('btn-next-paragraph');
+
+                    if (banner) {
+                        banner.style.display = 'flex';
+                        if (title) title.textContent = `¡Registro #${currentParagraph} Guardado con Éxito!`;
+                        if (msg) msg.textContent = `Has guardado ${savedRecordsThisPage} de 3 registros de esta misma página física.`;
+
+                        if (nextSlot && btnNext) {
+                            btnNext.style.display = 'inline-flex';
+                            btnNext.textContent = `👉 Registrar Siguiente Párrafo (${nextSlot}º)`;
+                            btnNext.onclick = () => prepareFormForNextParagraph(nextSlot);
+                        } else if (btnNext) {
+                            btnNext.style.display = 'none';
+                            if (msg) msg.textContent = `🎉 ¡Los 3 registros de esta página física han sido guardados con éxito!`;
+                        }
+
+                        // Scroll suave al inicio del modal para ver la confirmación
+                        const regModalContainer = document.querySelector('#registerModal .modal-container');
+                        if (regModalContainer) regModalContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                }
             })
             .catch(err => {
                 console.error(err);
                 showToast(err.message || 'Error al intentar guardar el acta. Por favor valida los datos.', 'error');
             })
             .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Guardar Registro';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Guardar Registro';
+                }
+                if (advanceBtn) {
+                    advanceBtn.disabled = false;
+                }
             });
         }
 
@@ -2459,7 +2943,7 @@
             const btnCrop = document.getElementById('btn-crop-transcribe');
             const statusMsg = document.getElementById('ai-status-msg');
 
-            if (!hasLoadedCropImage && (!fileInput.files || !fileInput.files[0])) {
+            if (!hasLoadedCropImage && (!fileInput.files || !fileInput.files[0]) && !originalImageFile) {
                 showToast('Por favor selecciona o arrastra primero la imagen de la página en la sección 5.', 'error');
                 const dragZone = document.getElementById('drag-zone');
                 if (dragZone) {
@@ -2470,27 +2954,29 @@
                 return;
             }
 
+            const currentSlotName = currentParagraph === 'full' ? 'la página completa' : `el ${currentParagraph}º registro`;
+
             const setLoadingState = (loading) => {
                 btn.disabled = loading;
                 if (btnCrop) btnCrop.disabled = loading;
 
                 if (loading) {
                     const spinner = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>`;
-                    btn.innerHTML = `${spinner} <span>Analizando párrafo...</span>`;
+                    btn.innerHTML = `${spinner} <span>Analizando ${currentSlotName}...</span>`;
                     if (btnCrop) btnCrop.innerHTML = `${spinner} <span>Transcribiendo...</span>`;
                     
                     statusMsg.style.display = 'block';
                     statusMsg.style.background = 'rgba(99, 102, 241, 0.15)';
                     statusMsg.style.color = '#818cf8';
-                    statusMsg.textContent = '🧠 Analizando caligrafía del párrafo seleccionado con Visión por IA (evitando mezclar registros)...';
+                    statusMsg.textContent = `🧠 Analizando caligrafía de ${currentSlotName} con Visión por IA (evitando mezclar con los otros registros)...`;
                 } else {
                     btn.innerHTML = `
                         <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-                        <span>Auto-Transcribir Párrafo</span>
+                        <span>Auto-Transcribir ${currentParagraph === 'full' ? 'Página' : currentParagraph + 'º Reg'}</span>
                     `;
                     if (btnCrop) btnCrop.innerHTML = `
                         <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-                        <span>Transcribir Párrafo Seleccionado</span>
+                        <span id="btn-crop-transcribe-text">Transcribir ${currentParagraph === 'full' ? 'Página' : currentParagraph + 'º Registro'} con IA</span>
                     `;
                 }
             };
@@ -2500,10 +2986,14 @@
             getActiveCropBlob(blobToSend => {
                 const formData = new FormData();
                 if (blobToSend) {
-                    formData.append('imagen_pagina', blobToSend, 'parrafo_seleccionado.jpg');
-                } else {
+                    formData.append('imagen_pagina', blobToSend, `parrafo_${currentParagraph}.jpg`);
+                } else if (originalImageFile) {
+                    formData.append('imagen_pagina', originalImageFile);
+                } else if (fileInput.files && fileInput.files[0]) {
                     formData.append('imagen_pagina', fileInput.files[0]);
                 }
+
+                formData.append('parrafo_index', currentParagraph);
 
                 fetch('/api/actas/transcribir-imagen', {
                     method: 'POST',
@@ -2515,6 +3005,9 @@
                     if (!resData.success || !resData.data) {
                         throw new Error(resData.message || 'No se logró transcribir la imagen.');
                     }
+
+                    const banner = document.getElementById('multi-record-banner');
+                    if (banner) banner.style.display = 'none';
 
                     const d = resData.data;
 
@@ -2561,9 +3054,9 @@
 
                     statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
                     statusMsg.style.color = '#4ade80';
-                    statusMsg.textContent = '✨ ¡Párrafo transcrito con éxito por IA! Revisa la información antes de guardar.';
+                    statusMsg.textContent = `✨ ¡Registro #${currentParagraph} transcrito con éxito por IA! Revisa la información antes de guardar.`;
                     
-                    showToast('Transcripción de párrafo completada. Revisa los datos.');
+                    showToast(`Transcripción del ${currentParagraph}º registro completada. Revisa los datos.`);
 
                     // Desplazarse suavemente arriba para ver los campos completados
                     const regModalContainer = document.querySelector('#registerModal .modal-container');
