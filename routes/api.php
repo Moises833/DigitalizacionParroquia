@@ -35,3 +35,7 @@ Route::post('/movil/upload', [\App\Http\Controllers\MovilUploadController::class
 Route::get('/movil/check-latest', [\App\Http\Controllers\MovilUploadController::class, 'checkLatest']);
 Route::get('/movil/debug-status', [\App\Http\Controllers\MovilUploadController::class, 'debugStatus']);
 Route::get('/movil/network-ips', [\App\Http\Controllers\MovilUploadController::class, 'getNetworkIps']);
+
+// Configuración de Inteligencia Artificial
+Route::get('/config/ai-status', [\App\Http\Controllers\ActaBautizoController::class, 'getAiStatus']);
+Route::post('/config/ai-key', [\App\Http\Controllers\ActaBautizoController::class, 'saveAiKey']);

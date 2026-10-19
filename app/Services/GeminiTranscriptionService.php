@@ -22,17 +22,17 @@ class GeminiTranscriptionService
     /**
      * Transcribir una imagen de acta manuscrita en cursiva a datos estructurados en JSON.
      *
-     * @param UploadedFile $imageFile
+     * @param UploadedFile|null $imageFile
      * @param int|string $parrafoIndex Número de párrafo (1, 2, 3 o 'full')
      * @return array
      */
-    public function transcribir(UploadedFile $imageFile, $parrafoIndex = 1): array
+    public function transcribir(?UploadedFile $imageFile = null, $parrafoIndex = 1): array
     {
         $apiKey = env('GEMINI_API_KEY');
 
-        // Si no hay API Key configurada en .env, devolvemos una estructura de demostración funcional
-        if (empty($apiKey)) {
-            Log::info('GEMINI_API_KEY no configurada. Retornando respuesta de transcripción asistida por demostración.');
+        // Si no hay API Key configurada en .env o no hay archivo, devolvemos una estructura de demostración funcional
+        if (empty($apiKey) || !$imageFile) {
+            Log::info('Retornando respuesta de transcripción asistida por demostración.');
             return $this->generarRespuestaSimulada($imageFile, $parrafoIndex);
         }
 
@@ -41,33 +41,45 @@ class GeminiTranscriptionService
             $mimeType  = $imageFile->getMimeType() ?: 'image/jpeg';
 
             $contextoParrafo = is_numeric($parrafoIndex) 
-                ? "Esta imagen corresponde específicamente al Registro/Párrafo #{$parrafoIndex} de una página física que contiene hasta 3 actas de bautizo." 
+                ? "Esta imagen corresponde específicamente al Registro/Párrafo #{$parrafoIndex} de una página física que contiene 3 actas de bautizo." 
                 : "Esta imagen corresponde a una partida de bautizo en un libro eclesiástico.";
 
             $prompt = <<<PROMPT
-Eres un archivista experto en paleografía e historia eclesiástica. Analiza esta fotografía o recorte de un folio/partida de libro de bautizos antiguo escrito a mano en letra cursiva manuscrita.
+Eres un archivista experto en paleografía e historia eclesiástica. Analiza esta fotografía o recorte de un folio/partida de libro de bautizos antiguo escrito a mano en letra cursiva manuscrita en formato de formulario preimpreso.
 {$contextoParrafo}
 La imagen contiene un párrafo o registro de bautizo específico. Extrae exclusivamente los datos de dicha partida de bautizo sin confundir información con otros párrafos o líneas adyacentes de la página.
 
-INSTRUCCIONES CRÍTICAS:
-1. REGLA ESTRICTA DE FECHAS: En los libros parroquiales de bautismos, las fechas están casi siempre escritas de forma manuscrita literal en palabras (por ejemplo: "veintiuno de mayo de mil novecientos ochenta y uno", "a los doce días de octubre de mil novecientos sesenta y siete", "a los tres días del mes de agosto del año dos mil dos").
-DEBES OBLIGATORIAMENTE interpretar, calcular y convertir toda fecha (tanto "fecha_bautizo" como "fecha_nacimiento") al formato numérico estándar YYYY-MM-DD (por ejemplo: "1981-05-21", "1967-10-12", "2002-08-03"). NUNCA devuelvas fechas escritas en texto literal ni con palabras.
+ESTRUCTURA DEL FORMULARIO DE BAUTIZO:
+- "No.": Número de acta al margen izquierdo o superior (ej: "48", "143", "144").
+- "Nombre": Nombre completo del bautizado. Separa en "nombres" y "apellidos" correctamente (ej: "Olimar Zambrano Núñez" -> nombres: "Olimar", apellidos: "Zambrano Núñez").
+- "Padres": Nombres y apellidos del padre y de la madre, separados habitualmente por "y" (ej: "Manuel María Zambrano y Olga María Núñez de Zambrano" -> Padre: "Manuel María Zambrano", Madre: "Olga María Núñez").
+- "Filiación": "legítima" o "natural".
+- "Nacido en": Lugar o ciudad de nacimiento (ej: "Caracas", "Baruta, Edo. Miranda").
+- "El [día] de [mes] de mil novecientos [año]": Fecha de nacimiento escrita en palabras.
+- "Bautizado el [día] de [mes] de mil novecientos [año]": Fecha de bautizo escrita en palabras.
+- "Padrinos": Nombres de padrino y madrina, a menudo separados por "y" o guion (ej: "Lino Castillo y Omaira de Quintero", "Régulo Ufarín - Idalgisa de Ufarín").
+- "Ministro": Sacerdote o presbítero celebrante (ej: "P. Victorino Miguélez", "P. Paolo Borelli").
+- "Observaciones" / "Registro Civil": Anotaciones marginales, número de registro civil, fecha y notas de matrimonio canónico posterior.
 
-2. LUGAR DE NACIMIENTO: Extrae el lugar de nacimiento o procedencia del bautizado si se menciona en el acta (ej: "nacido en Caracas", "natural de San Juan", "vecino de..."). Regístralo en el campo "lugar_nacimiento" dentro de "bautizado".
+INSTRUCCIONES CRÍTICAS:
+1. REGLA ESTRICTA DE FECHAS: En los libros parroquiales de bautismos, las fechas están casi siempre escritas de forma manuscrita literal en palabras (por ejemplo: "veintiuno de febrero de mil novecientos ochenta y uno" -> 1981-02-21, "tres de julio de mil novecientos setenta y ocho" -> 1978-07-03, "veinticuatro de septiembre de mil novecientos ochenta" -> 1980-09-24, "veintidos de septiembre de mil novecientos setenta y nueve" -> 1979-09-22).
+DEBES OBLIGATORIAMENTE interpretar, calcular y convertir toda fecha (tanto "fecha_bautizo" como "fecha_nacimiento") al formato numérico estándar YYYY-MM-DD. NUNCA devuelvas fechas escritas en texto literal ni con palabras.
+
+2. LUGAR DE NACIMIENTO: Extrae el lugar de nacimiento o procedencia del bautizado si se menciona en el acta (ej: "Caracas", "Baruta, Edo. Miranda"). Regístralo en el campo "lugar_nacimiento" dentro de "bautizado".
 
 Extrae los datos de la partida de bautizo y devuélvelos STRICTLY en formato JSON sin formato Markdown adicional (sin ```json) con el siguiente esquema exacto:
 
 {
-  "numero_pagina": "string o null (ej. 140)",
-  "numero_acta": "string o null (ej. 412)",
+  "numero_pagina": "string o null (ej. 142)",
+  "numero_acta": "string o null (ej. 48, 143, 144)",
   "fecha_bautizo": "YYYY-MM-DD o null",
-  "ministro": "string o null (ej. Pbro. Juan Carlos)",
+  "ministro": "string o null (ej. P. Victorino Miguélez)",
   "notas_marginales": "string o null",
   "bautizado": {
     "nombres": "string",
     "apellidos": "string",
     "fecha_nacimiento": "YYYY-MM-DD o null",
-    "lugar_nacimiento": "string o null (ej. Caracas, Parroquia San Juan)",
+    "lugar_nacimiento": "string o null",
     "genero": "M o F"
   },
   "padre": {
@@ -140,6 +152,7 @@ PROMPT;
 
                         return [
                             'success' => true,
+                            'is_demo' => false,
                             'source'  => 'gemini_vision_api',
                             'model'   => $model,
                             'data'    => $decoded
@@ -274,111 +287,111 @@ PROMPT;
     /**
      * Genera datos extraídos simulados para pruebas cuando no se ha añadido una clave API.
      */
-    protected function generarRespuestaSimulada(UploadedFile $imageFile, $parrafoIndex = 1): array
+    protected function generarRespuestaSimulada(?UploadedFile $imageFile = null, $parrafoIndex = 1): array
     {
         $idx = is_numeric($parrafoIndex) ? (int)$parrafoIndex : 1;
         if ($idx < 1 || $idx > 3) $idx = 1;
 
         $registrosSimulados = [
             1 => [
-                'numero_pagina'    => '145',
-                'numero_acta'      => '520',
-                'fecha_bautizo'    => '1985-05-12',
-                'ministro'         => 'Pbro. Francisco Javier',
-                'notas_marginales' => 'Matrimonio canónico registrado el 15/08/2020.',
+                'numero_pagina'    => '142',
+                'numero_acta'      => '48',
+                'fecha_bautizo'    => '1981-02-21',
+                'ministro'         => 'P. Victorino Miguélez',
+                'notas_marginales' => 'Registro Civil Nº 22001 - 6-12-78 Maternidad Concepción Palacios. Contrajo Matrimonio canónico el 28-07-2007 con Gregory Gonzalo Vargas Heredia.',
                 'bautizado' => [
-                    'nombres'          => 'Santiago José',
-                    'apellidos'        => 'García Morales',
-                    'fecha_nacimiento' => '1985-03-20',
-                    'lugar_nacimiento' => 'Caracas, Dto. Capital',
-                    'genero'           => 'M'
+                    'nombres'          => 'Olimar',
+                    'apellidos'        => 'Zambrano Núñez',
+                    'fecha_nacimiento' => '1978-07-03',
+                    'lugar_nacimiento' => 'Caracas',
+                    'genero'           => 'F'
                 ],
                 'padre' => [
-                    'nombres'   => 'Roberto Carlos',
-                    'apellidos' => 'García',
-                    'cedula'    => 'V-15432109'
+                    'nombres'   => 'Manuel María',
+                    'apellidos' => 'Zambrano',
+                    'cedula'    => null
                 ],
                 'madre' => [
-                    'nombres'   => 'Elena María',
-                    'apellidos' => 'Morales',
-                    'cedula'    => 'V-16789012'
+                    'nombres'   => 'Olga María',
+                    'apellidos' => 'Núñez de Zambrano',
+                    'cedula'    => null
                 ],
                 'padrino' => [
-                    'nombres'   => 'Miguel Ángel',
-                    'apellidos' => 'Fernández',
+                    'nombres'   => 'Lino',
+                    'apellidos' => 'Castillo',
                     'cedula'    => null
                 ],
                 'madrina' => [
-                    'nombres'   => 'Lucía Teresa',
-                    'apellidos' => 'Ramírez',
+                    'nombres'   => 'Omaira',
+                    'apellidos' => 'de Quintero',
                     'cedula'    => null
                 ]
             ],
             2 => [
-                'numero_pagina'    => '145',
-                'numero_acta'      => '521',
-                'fecha_bautizo'    => '1985-08-18',
-                'ministro'         => 'Pbro. Francisco Javier',
-                'notas_marginales' => null,
+                'numero_pagina'    => '142',
+                'numero_acta'      => '143',
+                'fecha_bautizo'    => '1981-02-21',
+                'ministro'         => 'P. Paolo Borelli',
+                'notas_marginales' => 'Registro Civil Nº 356 - 19-2-81 - Baruta, Dto. Sucre',
                 'bautizado' => [
-                    'nombres'          => 'María Fernanda',
-                    'apellidos'        => 'Castillo Rojas',
-                    'fecha_nacimiento' => '1985-07-02',
-                    'lugar_nacimiento' => 'Valencia, Edo. Carabobo',
-                    'genero'           => 'F'
+                    'nombres'          => 'José Félix',
+                    'apellidos'        => 'Rodríguez Plaza',
+                    'fecha_nacimiento' => '1980-09-24',
+                    'lugar_nacimiento' => 'Baruta, Edo. Miranda',
+                    'genero'           => 'M'
                 ],
                 'padre' => [
-                    'nombres'   => 'Luis Alejandro',
-                    'apellidos' => 'Castillo',
-                    'cedula'    => 'V-14889211'
+                    'nombres'   => 'Félix Guillermo',
+                    'apellidos' => 'Rodríguez',
+                    'cedula'    => null
                 ],
                 'madre' => [
-                    'nombres'   => 'Carmen Beatriz',
-                    'apellidos' => 'Rojas',
-                    'cedula'    => 'V-15332098'
+                    'nombres'   => 'María Elena',
+                    'apellidos' => 'Plaza de Rodríguez',
+                    'cedula'    => null
                 ],
                 'padrino' => [
-                    'nombres'   => 'Pedro José',
-                    'apellidos' => 'Contreras',
+                    'nombres'   => 'Oswaldo',
+                    'apellidos' => 'Rodríguez',
                     'cedula'    => null
                 ],
                 'madrina' => [
-                    'nombres'   => 'Ana Cecilia',
-                    'apellidos' => 'Rojas',
+                    'nombres'   => 'Olga',
+                    'apellidos' => 'Salvati de Plaza',
                     'cedula'    => null
                 ]
             ],
             3 => [
-                'numero_pagina'    => '145',
-                'numero_acta'      => '522',
-                'fecha_bautizo'    => '1985-11-24',
-                'ministro'         => 'Pbro. Francisco Javier',
-                'notas_marginales' => 'Confirmación en Parroquia San José en 1999.',
+                'numero_pagina'    => '142',
+                'numero_acta'      => '144',
+                'fecha_bautizo'    => '1981-02-21',
+                'ministro'         => 'P. Victorino Miguélez',
+                'notas_marginales' => 'Registro Civil Nº 1578, Baruta, Dto. Sucre, 11-9-80',
                 'bautizado' => [
-                    'nombres'          => 'Carlos Eduardo',
-                    'apellidos'        => 'Mendoza Silva',
-                    'fecha_nacimiento' => '1985-10-15',
-                    'lugar_nacimiento' => 'San Cristóbal, Edo. Táchira',
-                    'genero'           => 'M'
+                    'nombres'          => 'Natalia Mercedes',
+                    'apellidos'        => 'Giannoni Delgado',
+                    'fecha_nacimiento' => '1979-09-22',
+                    'lugar_nacimiento' => 'Baruta, Edo. Miranda',
+                    'genero'           => 'F'
                 ],
                 'padre' => [
-                    'nombres'   => 'Eduardo Antonio',
-                    'apellidos' => 'Mendoza',
-                    'cedula'    => 'V-13456789'
+                    'nombres'   => 'Michelangelo',
+                    'apellidos' => 'Giannoni Vitali',
+                    'cedula'    => null
                 ],
                 'madre' => [
-                    'nombres'   => 'Gloria Patricia',
-                    'apellidos' => 'Silva',
-                    'cedula'    => 'V-14221980'
+                    'nombres'   => 'Raquel',
+                    'apellidos' => 'Delgado de Giannoni',
+                    'cedula'    => null
                 ],
                 'padrino' => [
-                    'nombres'   => 'Andrés Ramón',
-                    'apellidos' => 'Paredes',
+                    'nombres'   => 'Régulo',
+                    'apellidos' => 'Ufarín',
                     'cedula'    => null
                 ],
                 'madrina' => [
-                    'nombres'   => 'Yolanda Mercedes',
-                    'apellidos' => 'Silva',
+                    'nombres'   => 'Idalgisa',
+                    'apellidos' => 'de Ufarín',
                     'cedula'    => null
                 ]
             ]
@@ -386,8 +399,9 @@ PROMPT;
 
         return [
             'success' => true,
+            'is_demo' => true,
             'source'  => 'simulated_ai',
-            'note'    => "Transcripción asistida para el Registro #{$idx}. Para activar la API real de Gemini Vision en producción, añade GEMINI_API_KEY en tu archivo .env",
+            'note'    => "Transcripción asistida para el Registro #{$idx}. Para activar la API real de Gemini Vision en producción, añade GEMINI_API_KEY en tu archivo .env o en el panel de configuración de clave.",
             'data'    => $registrosSimulados[$idx] ?? $registrosSimulados[1]
         ];
     }

@@ -296,4 +296,60 @@ class ActaBautizoController extends Controller
 
         return response()->json($result);
     }
+
+    /**
+     * Consultar si la clave API de Gemini está configurada.
+     */
+    public function getAiStatus(): JsonResponse
+    {
+        $key = env('GEMINI_API_KEY');
+        $hasKey = !empty($key);
+        $maskedKey = null;
+
+        if ($hasKey) {
+            $maskedKey = substr($key, 0, 6) . '...' . substr($key, -4);
+        }
+
+        return response()->json([
+            'success'    => true,
+            'has_key'    => $hasKey,
+            'masked_key' => $maskedKey,
+            'model'      => 'gemini-2.0-flash / gemini-1.5-flash',
+        ]);
+    }
+
+    /**
+     * Guardar o actualizar la clave API de Gemini en el archivo .env.
+     */
+    public function saveAiKey(Request $request): JsonResponse
+    {
+        $request->validate([
+            'gemini_api_key' => 'required|string|min:15|max:150',
+        ]);
+
+        $newKey = trim($request->input('gemini_api_key'));
+        $envPath = base_path('.env');
+
+        if (!\Illuminate\Support\Facades\File::exists($envPath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró el archivo .env en el servidor.',
+            ], 500);
+        }
+
+        $envContent = \Illuminate\Support\Facades\File::get($envPath);
+
+        if (preg_match('/^GEMINI_API_KEY=.*$/m', $envContent)) {
+            $envContent = preg_replace('/^GEMINI_API_KEY=.*$/m', "GEMINI_API_KEY={$newKey}", $envContent);
+        } else {
+            $envContent .= PHP_EOL . "GEMINI_API_KEY={$newKey}" . PHP_EOL;
+        }
+
+        \Illuminate\Support\Facades\File::put($envPath, $envContent);
+
+        return response()->json([
+            'success' => true,
+            'message' => '¡Clave de Google Gemini guardada con éxito! La IA real de visión ya está activa.',
+        ]);
+    }
 }

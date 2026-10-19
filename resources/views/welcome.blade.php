@@ -1140,6 +1140,15 @@
                 </svg>
             </button>
 
+            <!-- Botón de Configuración de IA Gemini -->
+            <button class="btn btn-secondary" id="openAIKeyModal" title="Configurar Clave de Inteligencia Artificial (Gemini Vision)" style="display: flex; align-items: center; gap: 6px;">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18a2.5 2.5 0 0 0 2.5-2.5A2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5z"/>
+                </svg>
+                <span>IA Gemini</span>
+                <span id="nav-ai-status-badge" style="font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.4);">Demo</span>
+            </button>
+
             <!-- Botón de Conexión Móvil QR -->
             <button class="btn btn-secondary" id="openQRModal" title="Vincular teléfono móvil mediante código QR" style="display: flex; align-items: center; gap: 6px;">
                 <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
@@ -1516,6 +1525,49 @@
         </div>
     </div>
 
+    <!-- Modal: Configuración de Clave IA Gemini -->
+    <div class="modal-overlay" id="aiKeyModal">
+        <div class="modal-container" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3>Configuración de Inteligencia Artificial (Gemini)</h3>
+                <button class="modal-close" onclick="closeModal('aiKeyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 10px; padding: 14px;">
+                    <div style="font-size: 1.8rem; line-height: 1;">✨</div>
+                    <div style="font-size: 0.88rem; color: var(--text-primary); line-height: 1.5;">
+                        <strong>Reconocimiento de Letra Manuscrita con Google Gemini</strong><br>
+                        <span style="color: var(--text-secondary); font-size: 0.82rem;">
+                            Con tu clave API gratuita de Google Gemini, el sistema transcribirá con precisión exacta los libros de bautizo físicos a partir de las fotos. Sin clave, el sistema funciona en modo demostración.
+                        </span>
+                    </div>
+                </div>
+
+                <div id="ai-status-card" style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; font-size: 0.88rem; display: flex; align-items: center; justify-content: space-between; background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.3);">
+                    <span id="ai-status-text">Verificando estado...</span>
+                    <span id="ai-status-badge" style="font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600;"></span>
+                </div>
+
+                <form id="ai-key-form">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="gemini_api_key" style="font-weight: 600; font-size: 0.88rem; margin-bottom: 6px; display: block;">Clave API de Gemini (Google AI Studio)</label>
+                        <input type="password" id="gemini_api_key" class="form-control" placeholder="Pega aquí tu clave AIzaSy..." style="font-family: monospace; font-size: 0.9rem;" autocomplete="off">
+                        <small style="display: block; margin-top: 6px; color: var(--text-secondary); font-size: 0.78rem;">
+                            ¿No tienes una clave? Puedes obtenerla gratis en <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style="color: var(--accent-color); text-decoration: underline;">Google AI Studio</a>.
+                        </small>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('aiKeyModal')">Cerrar</button>
+                        <button type="submit" class="btn" id="btn-save-ai-key" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <span>Guardar Clave</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Registrar Nueva Acta -->
     <div class="modal-overlay" id="registerModal">
         <div class="modal-container">
@@ -1829,9 +1881,14 @@
             document.getElementById('openRegisterModal').addEventListener('click', () => openModal('registerModal'));
             document.getElementById('openBackupModal').addEventListener('click', () => openModal('backupModal'));
             document.getElementById('openQRModal').addEventListener('click', showQRModal);
+            document.getElementById('openAIKeyModal').addEventListener('click', () => openModal('aiKeyModal'));
+            document.getElementById('ai-key-form').addEventListener('submit', handleSaveAiKey);
             document.getElementById('btn-search').addEventListener('click', () => fetchActas());
             document.getElementById('btn-ai-transcribe').addEventListener('click', handleAITranscription);
             document.getElementById('restore-form').addEventListener('submit', handleRestoreSubmit);
+
+            // Verificar estado de la API de IA Gemini
+            checkAiStatus();
 
             // Iniciar sincronización en segundo plano para recibir fotos del teléfono
             startMobilePhotoPolling();
@@ -3052,11 +3109,17 @@
                         if (notasInput) notasInput.value = d.notas_marginales;
                     }
 
-                    statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
-                    statusMsg.style.color = '#4ade80';
-                    statusMsg.textContent = `✨ ¡Registro #${currentParagraph} transcrito con éxito por IA! Revisa la información antes de guardar.`;
-                    
-                    showToast(`Transcripción del ${currentParagraph}º registro completada. Revisa los datos.`);
+                    if (resData.is_demo) {
+                        statusMsg.style.background = 'rgba(234, 179, 8, 0.15)';
+                        statusMsg.style.color = '#eab308';
+                        statusMsg.innerHTML = `✨ ¡Registro #${currentParagraph} transcrito (Modo Demostración)! Puedes configurar tu clave de Google en el botón <strong>"IA Gemini"</strong> para transcripción en vivo de cualquier libro.`;
+                        showToast(`Transcripción del ${currentParagraph}º registro completada (Modo Demostración). Revisa los datos.`);
+                    } else {
+                        statusMsg.style.background = 'rgba(34, 197, 94, 0.15)';
+                        statusMsg.style.color = '#4ade80';
+                        statusMsg.textContent = `✨ ¡Registro #${currentParagraph} transcrito con éxito por IA Gemini Vision! Revisa la información antes de guardar.`;
+                        showToast(`Transcripción del ${currentParagraph}º registro completada con IA Gemini.`);
+                    }
 
                     // Desplazarse suavemente arriba para ver los campos completados
                     const regModalContainer = document.querySelector('#registerModal .modal-container');
@@ -3072,6 +3135,100 @@
                 .finally(() => {
                     setLoadingState(false);
                 });
+            });
+        }
+
+        // Comprobar estado de la IA Gemini
+        function checkAiStatus() {
+            fetch('/api/config/ai-status')
+                .then(res => res.json())
+                .then(data => {
+                    const navBadge = document.getElementById('nav-ai-status-badge');
+                    const statusCard = document.getElementById('ai-status-card');
+                    const statusText = document.getElementById('ai-status-text');
+                    const statusBadge = document.getElementById('ai-status-badge');
+
+                    if (data.has_key) {
+                        if (navBadge) {
+                            navBadge.textContent = 'En Vivo';
+                            navBadge.style.background = 'rgba(34, 197, 94, 0.2)';
+                            navBadge.style.color = '#22c55e';
+                            navBadge.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+                        }
+                        if (statusCard) {
+                            statusCard.style.background = 'rgba(34, 197, 94, 0.1)';
+                            statusCard.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+                        }
+                        if (statusText) statusText.innerHTML = `Clave configurada: <code>${data.masked_key}</code>`;
+                        if (statusBadge) {
+                            statusBadge.textContent = 'Activa';
+                            statusBadge.style.background = '#16a34a';
+                            statusBadge.style.color = '#ffffff';
+                        }
+                    } else {
+                        if (navBadge) {
+                            navBadge.textContent = 'Demo';
+                            navBadge.style.background = 'rgba(234, 179, 8, 0.2)';
+                            navBadge.style.color = '#eab308';
+                            navBadge.style.borderColor = 'rgba(234, 179, 8, 0.4)';
+                        }
+                        if (statusCard) {
+                            statusCard.style.background = 'rgba(234, 179, 8, 0.1)';
+                            statusCard.style.border = '1px solid rgba(234, 179, 8, 0.3)';
+                        }
+                        if (statusText) statusText.textContent = 'Modo Demostración (Sin clave configurada)';
+                        if (statusBadge) {
+                            statusBadge.textContent = 'Sin Clave';
+                            statusBadge.style.background = '#ca8a04';
+                            statusBadge.style.color = '#ffffff';
+                        }
+                    }
+                })
+                .catch(err => console.error('Error comprobando estado de IA:', err));
+        }
+
+        // Guardar Clave de la API Gemini
+        function handleSaveAiKey(e) {
+            e.preventDefault();
+            const input = document.getElementById('gemini_api_key');
+            const key = input ? input.value.trim() : '';
+            const btn = document.getElementById('btn-save-ai-key');
+
+            if (!key) {
+                showToast('Por favor escribe o pega una clave API de Gemini.', 'error');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Guardando...</span>';
+            }
+
+            fetch('/api/config/ai-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ gemini_api_key: key })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) throw new Error(data.message || 'Error al guardar clave');
+                showToast(data.message || 'Clave de IA configurada correctamente.');
+                if (input) input.value = '';
+                checkAiStatus();
+                closeModal('aiKeyModal');
+            })
+            .catch(err => {
+                console.error(err);
+                showToast(err.message || 'Error al guardar la clave de IA.', 'error');
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Guardar Clave</span>';
+                }
             });
         }
 
