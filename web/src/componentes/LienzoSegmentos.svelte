@@ -6,6 +6,7 @@
   // puedeSeleccionar(i): el padre puede impedir el cambio (p. ej. formulario sin guardar).
   let {
     src, segmentos = $bindable([]), seleccionado = $bindable(0), conActa = new Set(),
+    etiquetas = new Map(), // posición -> texto breve (estado de la IA)
     puedeSeleccionar = () => true, alCambiar, alCargar,
   } = $props()
 
@@ -110,7 +111,7 @@
          onpointerdown={(e) => empezar(e, i, "mover")}
          onkeydown={(e) => teclado(e, i)}
          onclick={() => seleccionar(i)}>
-      <span class="numero">{i + 1}{conActa.has(i + 1) ? " ✓" : ""}</span>
+      <span class="numero">{i + 1}{conActa.has(i + 1) ? " ✓" : etiquetas.get(i + 1) ? ` · ${etiquetas.get(i + 1)}` : ""}</span>
       {#if i === seleccionado}
         {#each BORDES as borde}
           <span class="asa {borde}" onpointerdown={(e) => empezar(e, i, borde)}></span>

@@ -1,12 +1,14 @@
 <script>
   import { untrack } from "svelte"
   import { interpretarFecha, formatearFecha } from "../lib/fechas.js"
+  import { AVISOS } from "../lib/marcas.js"
 
   // valor: "YYYY-MM-DD" o "". El texto se escribe como figura en el libro
   // ("veintiuno de mayo de mil novecientos ochenta y uno", "21/05/1981").
+  // marca: de dónde salió el valor ("copiado", "ia", "dudoso"); se borra al escribir.
   // invalida: el texto escrito no es una fecha; el formulario no deja guardar.
   let {
-    id, etiqueta, valor = $bindable(""), copiado = $bindable(false), invalida = $bindable(false),
+    id, etiqueta, valor = $bindable(""), marca = $bindable(""), invalida = $bindable(false),
   } = $props()
 
   let texto = $state(untrack(() => formatearFecha(valor)))
@@ -28,11 +30,11 @@
     const r = interpretarFecha(texto)
     invalida = r === null
     if (r !== null) valor = r
-    copiado = false
+    marca = ""
   }
 </script>
 
-<div class="campo" class:copiado>
+<div class="campo marca-{marca || 'ninguna'}">
   <label for={id}>{etiqueta}</label>
   <input {id} value={texto} oninput={escribir} autocomplete="off"
          aria-invalid={interpretada === null} aria-describedby="{id}-ayuda"
@@ -41,7 +43,9 @@
     {#if interpretada === null}
       No se reconoce la fecha. Escriba día, mes y año completo.
     {:else if interpretada}
-      {formatearFecha(interpretada)}{copiado ? " · copiado del acta anterior, verifique" : ""}
+      {formatearFecha(interpretada)}{marca ? ` · ${AVISOS[marca]}` : ""}
+    {:else if marca}
+      {AVISOS[marca]}
     {:else}
       &nbsp;
     {/if}

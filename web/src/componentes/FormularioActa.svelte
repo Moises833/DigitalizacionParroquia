@@ -3,45 +3,52 @@
   import { pb, mensajeError } from "../lib/pb.js"
   import { esAdmin } from "../lib/sesion.svelte.js"
   import { recortarImagen, mismoRecorte } from "../lib/recorte.js"
+  import { propuestaADatos, CAMPOS_TEXTO as TEXTOS, CAMPOS_FECHA as FECHAS } from "../lib/propuesta.js"
+  import { AVISOS } from "../lib/marcas.js"
   import CampoFecha from "./CampoFecha.svelte"
 
   // El componente se vuelve a crear para cada recuadro ({#key} en el padre).
+  // propuesta: lo que leyó la IA para este recuadro (solo se usa si aún no hay acta).
   let {
-    pagina, posicion, segmento, acta = null, anterior = null, urlImagen, proporcionImagen = 0.75,
+    pagina, posicion, segmento, acta = null, anterior = null, propuesta = null,
+    urlImagen, proporcionImagen = 0.75,
     sugerencias = { ministro: [], lugar_nacimiento: [] }, sucio = $bindable(false),
     alGuardado, alEliminado,
   } = $props()
 
-  const TEXTOS = [
-    "numero_acta", "nombres", "apellidos", "sexo", "lugar_nacimiento", "padre", "madre",
-    "padrino", "madrina", "ministro", "registro_civil", "observaciones", "notas_marginales",
-  ]
-  const FECHAS = ["fecha_nacimiento", "fecha_bautizo"]
   // Lo que suele repetirse entre actas seguidas del mismo libro.
   const ARRASTRABLES = ["ministro", "lugar_nacimiento", "fecha_bautizo"]
 
   function datosIniciales() {
     const d = Object.fromEntries([...TEXTOS, ...FECHAS].map((k) => [k, acta?.[k] ?? ""]))
     // Todas las claves presentes: bind: no acepta undefined en props con valor por defecto.
-    const copiados = Object.fromEntries([...TEXTOS, ...FECHAS].map((k) => [k, false]))
-    if (!acta && anterior) {
+    const marcas = Object.fromEntries([...TEXTOS, ...FECHAS].map((k) => [k, ""]))
+    if (acta) return { d, marcas }
+
+    if (propuesta) {
+      const ia = propuestaADatos(propuesta)
+      Object.assign(d, ia.datos)
+      Object.assign(marcas, ia.marcas)
+    }
+    // Lo que la IA no leyó se completa con el acta anterior.
+    if (anterior) {
       for (const k of ARRASTRABLES) {
-        if (anterior[k]) {
+        if (!d[k] && anterior[k]) {
           d[k] = anterior[k]
-          copiados[k] = true
+          marcas[k] = "copiado"
         }
       }
-      if (/^\d+$/.test(anterior.numero_acta ?? "")) {
+      if (!d.numero_acta && /^\d+$/.test(anterior.numero_acta ?? "")) {
         d.numero_acta = String(parseInt(anterior.numero_acta, 10) + 1)
-        copiados.numero_acta = true
+        marcas.numero_acta = "copiado"
       }
     }
-    return { d, copiados }
+    return { d, marcas }
   }
 
   const inicio = untrack(datosIniciales)
   let datos = $state(inicio.d)
-  let copiados = $state(inicio.copiados)
+  let marcas = $state(inicio.marcas)
   let invalidas = $state({ fecha_nacimiento: false, fecha_bautizo: false })
   let revisada = $state(untrack(() => acta?.estado === "revisada" || acta?.estado === "verificada"))
   let zoom = $state(1)
@@ -51,12 +58,12 @@
   let fechasInvertidas = $derived(
     datos.fecha_nacimiento && datos.fecha_bautizo && datos.fecha_nacimiento > datos.fecha_bautizo,
   )
-  let hayCopiados = $derived(Object.values(copiados).some(Boolean))
+  let pendientes = $derived(Object.values(marcas).filter(Boolean))
 
   // Un acta nueva con datos copiados no cuenta como cambio hasta que se escribe algo:
   // "sucio" lo marca el evento input de todo el formulario.
   function editado(campo) {
-    copiados[campo] = false
+    marcas[campo] = ""
   }
 
   // Recorte mostrado con la imagen completa desplazada: no hace falta otra descarga.
@@ -91,7 +98,8 @@
         datosForm.append("pagina", pagina.id)
         datosForm.append("libro", pagina.libro)
         datosForm.append("posicion", String(posicion))
-        datosForm.append("origen_datos", "manual")
+        datosForm.append("origen_datos", propuesta ? "ia" : "manual")
+        if (propuesta) datosForm.append("ia_respuesta", JSON.stringify(propuesta))
         registro = await pb.collection("actas_bautismo").create(datosForm)
       }
       sucio = false
@@ -123,7 +131,7 @@
 </script>
 
 {#snippet texto(campo, etiqueta, opciones = {})}
-  <div class="campo" class:copiado={copiados[campo]}>
+  <div class="campo marca-{marcas[campo] || 'ninguna'}">
     <label for="acta-{campo}">{etiqueta}</label>
     {#if opciones.largo}
       <textarea id="acta-{campo}" rows="2" bind:value={datos[campo]} oninput={() => editado(campo)}></textarea>
@@ -131,7 +139,7 @@
       <input id="acta-{campo}" bind:value={datos[campo]} oninput={() => editado(campo)}
              list={opciones.lista} autocomplete="off" maxlength={opciones.max ?? 200} />
     {/if}
-    {#if copiados[campo]}<span class="ayuda">Copiado del acta anterior, verifique</span>{/if}
+    {#if marcas[campo]}<span class="ayuda">{AVISOS[marcas[campo]]}</span>{/if}
   </div>
 {/snippet}
 
@@ -152,7 +160,18 @@
     </div>
   </div>
 
-  {#if hayCopiados}
+  {#if propuesta && !acta}
+    <p class="aviso-copia ia">
+      La IA leyó esta acta. Compare cada campo resaltado con la imagen antes de guardar;
+      {#if pendientes.includes("dudoso")}<strong>los marcados en rojo son los que la IA no pudo leer con seguridad.</strong>{/if}
+    </p>
+    {#if propuesta.texto_completo}
+      <details class="texto-ia">
+        <summary>Texto completo leído por la IA</summary>
+        <p>{propuesta.texto_completo}</p>
+      </details>
+    {/if}
+  {:else if pendientes.length}
     <p class="aviso-copia">Los campos resaltados se copiaron del acta anterior. Revíselos antes de guardar.</p>
   {/if}
 
@@ -161,7 +180,7 @@
     <div class="rejilla">
       {@render texto("numero_acta", "N.º de acta", { max: 20 })}
       <CampoFecha id="acta-fecha_bautizo" etiqueta="Fecha de bautizo" bind:valor={datos.fecha_bautizo}
-                  bind:copiado={copiados.fecha_bautizo} bind:invalida={invalidas.fecha_bautizo} />
+                  bind:marca={marcas.fecha_bautizo} bind:invalida={invalidas.fecha_bautizo} />
       {@render texto("ministro", "Ministro", { lista: "sug-ministro" })}
     </div>
   </fieldset>
@@ -171,16 +190,17 @@
     <div class="rejilla">
       {@render texto("nombres", "Nombres *", { max: 150 })}
       {@render texto("apellidos", "Apellidos", { max: 150 })}
-      <div class="campo">
+      <div class="campo marca-{marcas.sexo || 'ninguna'}">
         <span class="etiqueta-campo" id="acta-sexo">Sexo</span>
         <div class="opciones" role="radiogroup" aria-labelledby="acta-sexo">
           {#each [["M", "Masculino"], ["F", "Femenino"], ["", "Sin dato"]] as [valor, nombre]}
             <label><input type="radio" name="sexo" value={valor} bind:group={datos.sexo} onchange={() => editado("sexo")} /> {nombre}</label>
           {/each}
         </div>
+        {#if marcas.sexo}<span class="ayuda">{AVISOS[marcas.sexo]}</span>{/if}
       </div>
       <CampoFecha id="acta-fecha_nacimiento" etiqueta="Fecha de nacimiento" bind:valor={datos.fecha_nacimiento}
-                  bind:copiado={copiados.fecha_nacimiento} bind:invalida={invalidas.fecha_nacimiento} />
+                  bind:marca={marcas.fecha_nacimiento} bind:invalida={invalidas.fecha_nacimiento} />
       {@render texto("lugar_nacimiento", "Lugar de nacimiento", { lista: "sug-lugar" })}
     </div>
     {#if fechasInvertidas}
@@ -256,8 +276,17 @@
   .opciones { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; min-height: 42px; align-items: center; }
   .opciones label { font-weight: 400; display: flex; gap: 0.3rem; align-items: center; }
 
-  :global(.campo.copiado input) { background: #fdf6e3; border-color: #d9b45a; }
+  :global(.campo.marca-copiado input), :global(.campo.marca-ia input), :global(.campo.marca-ia textarea) {
+    background: #fdf6e3; border-color: #d9b45a;
+  }
+  :global(.campo.marca-dudoso input), :global(.campo.marca-dudoso textarea) {
+    background: #fdecea; border-color: var(--error); border-width: 2px;
+  }
+  :global(.campo.marca-dudoso .ayuda) { color: var(--error); font-weight: 600; }
   .aviso-copia { font-size: 0.9rem; background: #fdf6e3; border-left: 4px solid #d9b45a; padding: 0.4rem 0.75rem; margin: 0 0 0.75rem; }
+  .texto-ia { margin: 0 0 0.75rem; font-size: 0.9rem; }
+  .texto-ia summary { cursor: pointer; color: var(--primario); font-weight: 600; }
+  .texto-ia p { white-space: pre-line; background: var(--fondo); padding: 0.5rem 0.75rem; border-radius: var(--radio); margin: 0.4rem 0 0; }
 
   .revisada { display: flex; gap: 0.5rem; align-items: center; font-weight: 600; margin-bottom: 1rem; }
   .revisada input { width: 20px; height: 20px; }

@@ -12,6 +12,7 @@
   import Captura from "./paginas/Captura.svelte"
   import Actas from "./paginas/Actas.svelte"
   import EditorPagina from "./paginas/EditorPagina.svelte"
+  import Ia from "./paginas/Ia.svelte"
   import Movil from "./paginas/Movil.svelte"
 
   let estado = $state("cargando") // cargando | configurar | listo | sin-conexion
@@ -23,6 +24,7 @@
     { id: "libros", texto: "Libros" },
     { id: "usuarios", texto: "Usuarios", soloAdmin: true },
     { id: "parroquia", texto: "Parroquia", soloAdmin: true },
+    { id: "ia", texto: "Inteligencia artificial", soloAdmin: true },
   ]
 
   // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
@@ -101,6 +103,8 @@
         <Usuarios />
       {:else if ruta.actual === "parroquia" && esAdmin()}
         <Parroquia />
+      {:else if ruta.actual === "ia" && esAdmin()}
+        <Ia />
       {:else}
         <h1>Página no encontrada</h1>
         <a href="#/inicio">Volver al inicio</a>
