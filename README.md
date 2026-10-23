@@ -33,7 +33,7 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta).
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`.
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
@@ -56,6 +56,19 @@ En **Actas** se elige el libro y se ve qué páginas faltan; **Continuar donde q
 4. Cada acta guarda su propio recorte de imagen; si después se ajusta el recuadro, el recorte se rehace.
 
 Estados de la página: *Sin separar* → *Por transcribir* → *Completa* (todas sus actas guardadas). Un acta queda como *Borrador* hasta que se marca **Revisada**; el sistema registra quién la creó y quién la revisó.
+
+## Lectura con inteligencia artificial
+
+La IA (Google Gemini) lee cada acta recortada y propone los datos; **una persona siempre los revisa** antes de guardarlos. Es opcional: sin ella todo se transcribe a mano igual.
+
+1. **Configurar (administrador):** en *Inteligencia artificial*, pegar una clave de Gemini (gratis en aistudio.google.com con una cuenta de Google de la parroquia), pulsar *Probar conexión*, elegir un modelo «flash» y activar la IA. La clave queda solo en el servidor y nunca se muestra.
+2. **Enviar:** en la página separada, *Leer con IA* manda las actas que falten; en *Actas*, *Leer con IA las páginas separadas* manda el libro entero.
+3. **Cola:** el servidor envía unas pocas por minuto (8 por defecto, con un máximo diario) mientras haya internet. Si Google avisa que se llegó al límite, espera y sigue solo; tras 3 errores un acta queda marcada y se puede reintentar.
+4. **Revisar:** al abrir el acta, el formulario ya viene lleno. En amarillo lo leído por la IA; en rojo lo que no leyó con seguridad. Las fechas se vuelven a calcular desde el texto que leyó la IA, y se marcan si no coinciden con su conversión. Al guardar, el acta queda como de origen «ia» y se conserva lo que propuso la IA.
+
+**Privacidad:** en el plan gratuito, Google puede usar lo enviado para mejorar sus productos y personas de Google pueden revisarlo. Las actas tienen datos personales: la parroquia debe aprobarlo o activar la facturación de Google Cloud, con la que Google no usa los datos.
+
+Para cambiar de proveedor de IA más adelante basta con reemplazar `pedirGemini()` en `servidor/pb_hooks/ia.js`.
 
 ## Instalar en la parroquia
 
@@ -82,7 +95,7 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 1. Base | Esquema, usuarios y roles, auditoría, interfaz, instalador | ✅ |
 | 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | ✅ |
 | 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | ✅ |
-| 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | Pendiente |
+| 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (falta probar con una clave real) |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | Pendiente |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | Pendiente |
 | 7. Respaldos | Respaldo local automático y copia en la nube | Pendiente |
