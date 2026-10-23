@@ -1,66 +1,67 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Digitalización de Libros de Bautismo
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema para digitalizar los libros de bautismo de la parroquia: captura de páginas (también desde el teléfono), separación de las actas de cada página, transcripción asistida por IA, búsqueda y emisión de la fe de bautismo.
 
-## About Laravel
+Está pensado para equipos modestos: todo corre en **un solo ejecutable** (PocketBase, unos 35 MB) con base de datos SQLite local, sin instalar PHP, Node ni bases de datos en la parroquia.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Estructura
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```
+servidor/
+  pb_migrations/   Esquema de la base de datos (colecciones, reglas de acceso, índices)
+  pb_hooks/        Lógica del servidor en JavaScript (auditoría, búsqueda, configuración inicial)
+  pb_public/       Interfaz compilada (se genera con npm run build, no se versiona)
+web/               Interfaz en Svelte 5 + Vite
+instalador/        Scripts que se copian al equipo de la parroquia
+scripts/           Herramientas de desarrollo (empaquetado, descarga verificada de PocketBase)
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Desarrollo
 
-## Learning Laravel
+Requisitos: Windows 64 bits, Node.js 20 o superior.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```powershell
+# 1. Descargar PocketBase (versión fijada, verificada por checksum)
+powershell -ExecutionPolicy Bypass -Command ". .\scripts\pocketbase.ps1; Obtener-PocketBase servidor"
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+# 2. Iniciar el servidor (aplica las migraciones automáticamente)
+cd servidor; .\pocketbase.exe serve
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# 3. En otra terminal, la interfaz con recarga en caliente
+cd web; npm install; npm run dev
+```
 
-## Laravel Sponsors
+La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Pruebas de la API (reglas de acceso, auditoría, búsqueda): con el servidor recién creado (sin `pb_data`), ejecutar `python scripts/prueba_api.py`.
 
-### Premium Partners
+## Instalar en la parroquia
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
+2. Copiar `dist\SistemaBautismos.zip` al equipo de la parroquia y descomprimirlo en una ruta corta (por ejemplo `C:\SistemaBautismos`).
+3. Ejecutar `instalar_sistema.bat` una sola vez: crea la cuenta de mantenimiento, abre el puerto 8090 solo para la red local y crea los accesos directos.
+4. Abrir **Sistema de Bautismos** desde el Escritorio.
 
-## Contributing
+Para **actualizar**, reemplazar todo excepto la carpeta `pb_data` (ahí están los datos y las imágenes).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Roles
 
-## Code of Conduct
+| Rol | Puede |
+|---|---|
+| Administrador | Todo: usuarios, datos de la parroquia, eliminar registros, ver la auditoría |
+| Secretaría | Registrar y editar libros, páginas y actas |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Cada creación, edición o eliminación queda registrada en la colección `auditoria` con el usuario y los valores anteriores y nuevos.
 
-## Security Vulnerabilities
+## Plan de trabajo
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Fase | Contenido | Estado |
+|---|---|---|
+| 1. Base | Esquema, usuarios y roles, auditoría, interfaz, instalador | ✅ |
+| 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | Pendiente |
+| 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | Pendiente |
+| 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | Pendiente |
+| 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | Pendiente |
+| 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | Pendiente |
+| 7. Respaldos | Respaldo local automático y copia en la nube | Pendiente |
+| 8. Piloto | Prueba con un libro real en la parroquia | Pendiente |
