@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte"
   import { pb, mensajeError } from "../lib/pb.js"
+  import { prepararTokenArchivos, urlArchivo } from "../lib/archivos.svelte.js"
 
   const CAMPOS = [
     { id: "nombre", texto: "Nombre de la parroquia", requerido: true },
@@ -24,6 +25,7 @@
   let guardando = $state(false)
 
   async function cargar() {
+    await prepararTokenArchivos()
     registro = (await pb.collection("parroquia").getList(1, 1)).items[0]
     datos = Object.fromEntries(CAMPOS.map((c) => [c.id, registro[c.id] ?? ""]))
   }
@@ -77,7 +79,7 @@
         <div class="campo">
           <label for={img.id}>{img.texto}</label>
           {#if registro[img.id]}
-            <img class="vista" src={pb.files.getURL(registro, registro[img.id])} alt={img.texto} />
+            <img class="vista" src={urlArchivo(registro, registro[img.id])} alt={img.texto} />
           {/if}
           <input id={img.id} type="file" accept="image/png,image/jpeg,image/webp"
                  onchange={(e) => elegirArchivo(img.id, e)} />

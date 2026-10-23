@@ -10,6 +10,8 @@
   import Usuarios from "./paginas/Usuarios.svelte"
   import Parroquia from "./paginas/Parroquia.svelte"
   import Proximamente from "./paginas/Proximamente.svelte"
+  import Captura from "./paginas/Captura.svelte"
+  import Movil from "./paginas/Movil.svelte"
 
   let estado = $state("cargando") // cargando | configurar | listo | sin-conexion
 
@@ -24,8 +26,10 @@
 
   const proximamente = {
     actas: { titulo: "Actas", fase: "Fases 3 a 5", descripcion: "Captura, revisión y búsqueda de actas de bautismo." },
-    captura: { titulo: "Captura de páginas", fase: "Fase 2", descripcion: "Subida de fotos desde la PC y desde el teléfono por código QR." },
   }
+
+  // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
+  let tokenMovil = $derived(ruta.actual.startsWith("movil/") ? ruta.actual.slice("movil/".length) : "")
 
   async function comprobar() {
     estado = "cargando"
@@ -43,10 +47,14 @@
     }
   }
 
-  onMount(comprobar)
+  onMount(() => {
+    if (!tokenMovil) comprobar()
+  })
 </script>
 
-{#if estado === "cargando"}
+{#if tokenMovil}
+  <Movil token={tokenMovil} />
+{:else if estado === "cargando"}
   <p class="centro suave">Cargando…</p>
 {:else if estado === "sin-conexion"}
   <div class="centro">
@@ -84,6 +92,8 @@
         <Inicio />
       {:else if ruta.actual === "libros"}
         <Libros />
+      {:else if ruta.actual === "captura"}
+        <Captura />
       {:else if ruta.actual === "usuarios" && esAdmin()}
         <Usuarios />
       {:else if ruta.actual === "parroquia" && esAdmin()}

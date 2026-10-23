@@ -33,7 +33,16 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API (reglas de acceso, auditoría, búsqueda): con el servidor recién creado (sin `pb_data`), ejecutar `python scripts/prueba_api.py`.
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda) y `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos).
+
+Para probar el teléfono en desarrollo, iniciar el servidor con `.\pocketbase.exe serve --http=0.0.0.0:8090` y abrir la interfaz compilada en el puerto 8090 (el QR apunta a ese puerto).
+
+## Captura de páginas
+
+- **Desde la PC:** se arrastran muchas fotos a la vez; se numeran por orden de nombre de archivo a partir del siguiente folio libre, y cada folio se puede corregir antes de subir.
+- **Desde el teléfono:** la PC muestra un QR con un enlace de un solo uso (vence a las 8 horas o al terminar la vinculación). El teléfono no necesita cuenta; cada foto llega a la PC al instante con el siguiente folio libre.
+- Las fotos se comprimen en el navegador (WebP, lado mayor de 2400 px) y se genera una miniatura de ~20 KB, así la computadora de la parroquia no procesa imágenes.
+- Las imágenes son archivos protegidos: solo se descargan con la sesión iniciada.
 
 ## Instalar en la parroquia
 
@@ -58,7 +67,7 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1. Base | Esquema, usuarios y roles, auditoría, interfaz, instalador | ✅ |
-| 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | Pendiente |
+| 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | ✅ |
 | 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | Pendiente |
 | 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | Pendiente |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | Pendiente |

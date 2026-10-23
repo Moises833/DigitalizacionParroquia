@@ -28,6 +28,18 @@ onRecordUpdate((e) => {
   e.next()
 }, "actas_bautismo")
 
+// --- Integridad -------------------------------------------------------------
+
+// La relación acta → página es opcional, así que PocketBase la dejaría vacía al
+// borrar la página. Se impide para no perder el vínculo de las actas con su imagen.
+onRecordDelete((e) => {
+  const total = e.app.countRecords("actas_bautismo", $dbx.hashExp({ pagina: e.record.id }))
+  if (total > 0) {
+    throw new BadRequestError(`La página tiene ${total} acta(s) registradas y no se puede eliminar.`)
+  }
+  e.next()
+}, "paginas")
+
 // --- Auditoría de cambios hechos por usuarios -------------------------------
 
 onRecordCreateRequest((e) => {
