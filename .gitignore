@@ -2,6 +2,9 @@
 /servidor/pocketbase.exe
 /servidor/pb_data/
 /servidor/pb_public/
+/servidor/respaldos/
+/servidor/pb_data_antes_*/
+/servidor/respaldo_nube_*/
 
 # Frontend
 /web/node_modules/

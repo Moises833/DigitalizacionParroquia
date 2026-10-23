@@ -1,10 +1,12 @@
 <script>
   import { onMount } from "svelte"
   import { pb } from "../lib/pb.js"
-  import { sesion } from "../lib/sesion.svelte.js"
+  import { sesion, esAdmin } from "../lib/sesion.svelte.js"
+  import { avisoRespaldo } from "../lib/respaldos.js"
 
   let parroquia = $state("")
   let totales = $state(null)
+  let respaldo = $state("")
 
   async function contar(coleccion, filtro = "") {
     const r = await pb.collection(coleccion).getList(1, 1, { filter: filtro, skipTotal: false, fields: "id" })
@@ -12,6 +14,9 @@
   }
 
   onMount(async () => {
+    pb.send("/api/respaldos/estado", { method: "GET" })
+      .then((e) => (respaldo = avisoRespaldo(e)))
+      .catch(() => { /* el aviso no es imprescindible */ })
     const [p, libros, paginas, actas, borradores] = await Promise.all([
       pb.collection("parroquia").getList(1, 1),
       contar("libros"),
@@ -26,6 +31,13 @@
 
 <h1>{parroquia || "Inicio"}</h1>
 <p class="suave">Hola, {sesion.usuario.name || sesion.usuario.email}.</p>
+
+{#if respaldo}
+  <div class="alerta error" role="status">
+    <strong>Respaldos:</strong> {respaldo}
+    {#if esAdmin()}<a href="#/respaldos">Revisar los respaldos</a>{:else}Avise al administrador del sistema.{/if}
+  </div>
+{/if}
 
 {#if totales}
   <div class="resumen">
@@ -49,4 +61,5 @@
   .resumen .tarjeta { display: flex; flex-direction: column; gap: 0.25rem; padding: 1.25rem; }
   .numero { font-family: var(--fuente-titulo); font-size: 2rem; font-weight: 600; color: var(--primario); }
   a.boton { text-decoration: none; }
+  .alerta a { color: inherit; font-weight: 600; margin-left: 0.25rem; }
 </style>

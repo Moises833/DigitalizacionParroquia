@@ -13,6 +13,7 @@
   import Actas from "./paginas/Actas.svelte"
   import EditorPagina from "./paginas/EditorPagina.svelte"
   import Ia from "./paginas/Ia.svelte"
+  import Respaldos from "./paginas/Respaldos.svelte"
   import Buscar from "./paginas/Buscar.svelte"
   import Certificado from "./paginas/Certificado.svelte"
   import Certificados from "./paginas/Certificados.svelte"
@@ -30,6 +31,7 @@
     { id: "usuarios", texto: "Usuarios", soloAdmin: true },
     { id: "parroquia", texto: "Parroquia", soloAdmin: true },
     { id: "ia", texto: "Inteligencia artificial", soloAdmin: true },
+    { id: "respaldos", texto: "Respaldos", soloAdmin: true },
   ]
 
   // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
@@ -121,6 +123,8 @@
         <Parroquia />
       {:else if ruta.actual === "ia" && esAdmin()}
         <Ia />
+      {:else if ruta.actual === "respaldos" && esAdmin()}
+        <Respaldos />
       {:else}
         <h1>Página no encontrada</h1>
         <a href="#/inicio">Volver al inicio</a>

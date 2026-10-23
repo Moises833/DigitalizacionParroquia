@@ -33,7 +33,7 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda y la fe de bautismo se prueban con `python scripts/prueba_busqueda.py` y `python scripts/prueba_certificados.py` (después de `prueba_api.py`).
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda y la fe de bautismo se prueban con `python scripts/prueba_busqueda.py` y `python scripts/prueba_certificados.py` (después de `prueba_api.py`). Los respaldos, con `python scripts/prueba_respaldos.py`: usa una nube S3 simulada y prueba también `restaurar.ps1`; el servidor debe iniciarse con `RESPALDO_SIN_CRON=1`.
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
@@ -90,6 +90,17 @@ Cada resultado muestra dónde está (libro, folio, número de acta) y al hacer c
 
 Si se prefiere sellar y firmar a mano, se desmarca «Imprimir el sello y la firma escaneados»: queda el espacio con la marca *L. S.* En la ventana de impresión conviene desmarcar «Encabezados y pies de página». Si alguien imprime la vista previa sin emitir, sale con la leyenda «VISTA PREVIA — SIN VALIDEZ».
 
+## Respaldos
+
+El sistema se respalda solo mientras la computadora está encendida: apenas se enciende y luego cada 8 horas (se puede cambiar). Se configura en **Respaldos** (administrador), que también muestra el estado y el historial y tiene **Respaldar ahora**. Si no hay un respaldo reciente, Inicio lo avisa a todos.
+
+- **Carpeta:** por defecto `respaldos`, junto a `pb_data`. Conviene cambiarla a **otro disco o un disco externo** que quede conectado: si se daña el disco de la computadora, se pierden los datos y su copia juntos. Si el disco no está conectado, se avisa y se reintenta cada 15 minutos.
+- **Nube:** cualquier almacenamiento compatible con S3. Backblaze B2 tiene 10 GB gratis: crear una cuenta con el correo de la parroquia, un bucket **privado** y una *Application Key* con acceso solo a ese bucket, y cargar endpoint, región, bucket, Key ID y clave en la página. La clave queda solo en el servidor. Guardar esos datos también fuera de la computadora: sin ellos no se recupera la copia.
+
+**Qué se guarda.** Cada destino tiene `db/datos_<fecha>.db` (copia de la base, las últimas 30) y `storage/` (todas las imágenes, sin miniaturas). Las imágenes no cambian nunca, así que cada respaldo copia solo las nuevas: el primero a la nube puede tardar horas y avanza un poco cada minuto, aunque la PC se apague en el medio. La copia de la base se sube al final, cuando ya están todas sus imágenes. Del destino no se borra ninguna imagen.
+
+**Restaurar.** Cerrar el sistema y abrir `restaurar_respaldo.bat` en la carpeta del sistema. Pregunta si restaurar desde una carpeta o desde la nube (la baja primero con `pocketbase.exe descargar-respaldo`) y qué copia usar. Los datos actuales no se borran: quedan en `pb_data_antes_<fecha>`. Si la computadora se dañó, instalar el sistema en la nueva y restaurar: desde la nube pide los datos de acceso.
+
 ## Instalar en la parroquia
 
 1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
@@ -97,7 +108,7 @@ Si se prefiere sellar y firmar a mano, se desmarca «Imprimir el sello y la firm
 3. Ejecutar `instalar_sistema.bat` una sola vez: crea la cuenta de mantenimiento, abre el puerto 8090 solo para la red local y crea los accesos directos.
 4. Abrir **Sistema de Bautismos** desde el Escritorio.
 
-Para **actualizar**, reemplazar todo excepto la carpeta `pb_data` (ahí están los datos y las imágenes).
+Para **actualizar**, reemplazar todo excepto las carpetas `pb_data` (ahí están los datos y las imágenes) y `respaldos`.
 
 ## Roles
 
@@ -118,5 +129,5 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (falta probar con una clave real) |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | ✅ |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | ✅ |
-| 7. Respaldos | Respaldo local automático y copia en la nube | Pendiente |
+| 7. Respaldos | Respaldo local automático y copia en la nube | ✅ (falta probar con una nube real) |
 | 8. Piloto | Prueba con un libro real en la parroquia | Pendiente |
