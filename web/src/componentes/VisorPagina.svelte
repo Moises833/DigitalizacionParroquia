@@ -61,7 +61,8 @@
       <label for="folio-visor">Folio</label>
       <input id="folio-visor" bind:value={folio} maxlength="20" />
     </div>
-    <button class="boton" type="submit" disabled={guardando}>Guardar folio</button>
+    <button class="boton secundario" type="submit" disabled={guardando}>Guardar folio</button>
+    <a class="boton" href="#/pagina/{pagina.id}">Separar y transcribir actas</a>
     <a class="boton secundario" href={urlArchivo(pagina, pagina.imagen)} target="_blank" rel="noopener">Ver en tamaño completo</a>
     <span class="espaciador"></span>
     {#if esAdmin()}

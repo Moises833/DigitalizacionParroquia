@@ -33,7 +33,9 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda) y `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos).
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta).
+
+Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
 Para probar el teléfono en desarrollo, iniciar el servidor con `.\pocketbase.exe serve --http=0.0.0.0:8090` y abrir la interfaz compilada en el puerto 8090 (el QR apunta a ese puerto).
 
@@ -43,6 +45,17 @@ Para probar el teléfono en desarrollo, iniciar el servidor con `.\pocketbase.ex
 - **Desde el teléfono:** la PC muestra un QR con un enlace de un solo uso (vence a las 8 horas o al terminar la vinculación). El teléfono no necesita cuenta; cada foto llega a la PC al instante con el siguiente folio libre.
 - Las fotos se comprimen en el navegador (WebP, lado mayor de 2400 px) y se genera una miniatura de ~20 KB, así la computadora de la parroquia no procesa imágenes.
 - Las imágenes son archivos protegidos: solo se descargan con la sesión iniciada.
+
+## Transcripción de actas
+
+En **Actas** se elige el libro y se ve qué páginas faltan; **Continuar donde quedé** abre la primera sin terminar.
+
+1. **Separar las actas:** se elige cuántas actas tiene la página (crea franjas iguales) o se dibuja cada recuadro arrastrando sobre la imagen. Los recuadros se mueven y se estiran con el mouse o con el teclado (flechas; Mayúsculas + flechas cambia el tamaño). Se guardan solos.
+2. **Transcribir:** el formulario muestra el recorte del acta (con zoom) arriba de los campos. Las fechas se escriben como figuran en el libro, "veintiuno de mayo de mil novecientos ochenta y uno" o "21/05/1981", y se guardan como 1981-05-21; se rechazan fechas imposibles y años de dos cifras.
+3. El número de acta, el ministro, la fecha de bautizo y el lugar se copian del acta anterior resaltados en amarillo para verificarlos. **Ctrl + Enter** guarda y pasa a la siguiente acta.
+4. Cada acta guarda su propio recorte de imagen; si después se ajusta el recuadro, el recorte se rehace.
+
+Estados de la página: *Sin separar* → *Por transcribir* → *Completa* (todas sus actas guardadas). Un acta queda como *Borrador* hasta que se marca **Revisada**; el sistema registra quién la creó y quién la revisó.
 
 ## Instalar en la parroquia
 
@@ -68,7 +81,7 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 |---|---|---|
 | 1. Base | Esquema, usuarios y roles, auditoría, interfaz, instalador | ✅ |
 | 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | ✅ |
-| 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | Pendiente |
+| 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | ✅ |
 | 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | Pendiente |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | Pendiente |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | Pendiente |

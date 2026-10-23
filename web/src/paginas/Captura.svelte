@@ -3,12 +3,11 @@
   import { pb, mensajeError } from "../lib/pb.js"
   import { compararFolios } from "../lib/imagen.js"
   import { prepararTokenArchivos } from "../lib/archivos.svelte.js"
+  import { libroPreferido, recordarLibro } from "../lib/preferencias.js"
   import SubidaPC from "../componentes/SubidaPC.svelte"
   import VinculoMovil from "../componentes/VinculoMovil.svelte"
   import GaleriaPaginas from "../componentes/GaleriaPaginas.svelte"
   import VisorPagina from "../componentes/VisorPagina.svelte"
-
-  const CLAVE_LIBRO = "captura.libro"
 
   let libros = $state([])
   let libroId = $state("")
@@ -25,13 +24,6 @@
   let folioSugerido = $derived(
     paginas.reduce((max, p) => Math.max(max, parseInt(p.folio, 10) || 0), 0) + 1,
   )
-
-  function leerPreferencia() {
-    try { return localStorage.getItem(CLAVE_LIBRO) || "" } catch { return "" }
-  }
-  function guardarPreferencia(id) {
-    try { localStorage.setItem(CLAVE_LIBRO, id) } catch { /* sin almacenamiento local */ }
-  }
 
   async function cargarPaginas() {
     paginas = libroId
@@ -61,7 +53,7 @@
 
   async function cambiarLibro(id) {
     libroId = id
-    guardarPreferencia(id)
+    recordarLibro(id)
     recientes = new Set()
     aviso = ""
     error = ""
@@ -78,8 +70,7 @@
       prepararTokenArchivos(),
     ])
     libros = lista
-    const preferido = leerPreferencia()
-    const inicial = libros.find((l) => l.id === preferido) ?? libros[0]
+    const inicial = libros.find((l) => l.id === libroPreferido()) ?? libros[0]
     if (inicial) await cambiarLibro(inicial.id)
   })
 

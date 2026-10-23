@@ -9,8 +9,9 @@
   import Libros from "./paginas/Libros.svelte"
   import Usuarios from "./paginas/Usuarios.svelte"
   import Parroquia from "./paginas/Parroquia.svelte"
-  import Proximamente from "./paginas/Proximamente.svelte"
   import Captura from "./paginas/Captura.svelte"
+  import Actas from "./paginas/Actas.svelte"
+  import EditorPagina from "./paginas/EditorPagina.svelte"
   import Movil from "./paginas/Movil.svelte"
 
   let estado = $state("cargando") // cargando | configurar | listo | sin-conexion
@@ -24,12 +25,10 @@
     { id: "parroquia", texto: "Parroquia", soloAdmin: true },
   ]
 
-  const proximamente = {
-    actas: { titulo: "Actas", fase: "Fases 3 a 5", descripcion: "Captura, revisión y búsqueda de actas de bautismo." },
-  }
-
   // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
   let tokenMovil = $derived(ruta.actual.startsWith("movil/") ? ruta.actual.slice("movil/".length) : "")
+  let paginaId = $derived(ruta.actual.startsWith("pagina/") ? ruta.actual.slice("pagina/".length) : "")
+  let seccion = $derived(paginaId ? "actas" : ruta.actual)
 
   async function comprobar() {
     estado = "cargando"
@@ -75,8 +74,8 @@
       <ul>
         {#each menu.filter((m) => !m.soloAdmin || esAdmin()) as item}
           <li>
-            <a href="#/{item.id}" class:activo={ruta.actual === item.id}
-               aria-current={ruta.actual === item.id ? "page" : undefined}>{item.texto}</a>
+            <a href="#/{item.id}" class:activo={seccion === item.id}
+               aria-current={seccion === item.id ? "page" : undefined}>{item.texto}</a>
           </li>
         {/each}
       </ul>
@@ -87,9 +86,13 @@
       </div>
     </nav>
 
-    <main class="contenido">
-      {#if ruta.actual === "inicio"}
+    <main class="contenido" class:ancho={paginaId}>
+      {#if paginaId}
+        {#key paginaId}<EditorPagina id={paginaId} />{/key}
+      {:else if ruta.actual === "inicio"}
         <Inicio />
+      {:else if ruta.actual === "actas"}
+        <Actas />
       {:else if ruta.actual === "libros"}
         <Libros />
       {:else if ruta.actual === "captura"}
@@ -98,8 +101,6 @@
         <Usuarios />
       {:else if ruta.actual === "parroquia" && esAdmin()}
         <Parroquia />
-      {:else if proximamente[ruta.actual]}
-        <Proximamente {...proximamente[ruta.actual]} />
       {:else}
         <h1>Página no encontrada</h1>
         <a href="#/inicio">Volver al inicio</a>
@@ -126,6 +127,7 @@
   .usuario { margin-top: auto; font-size: 0.95rem; display: flex; flex-direction: column; gap: 0.4rem; }
   .usuario .rol { color: rgb(255 255 255 / 0.75); font-size: 0.85rem; }
   .contenido { padding: 2rem; max-width: 1100px; width: 100%; min-width: 0; }
+  .contenido.ancho { max-width: 1500px; }
 
   @media (max-width: 760px) {
     .marco { grid-template-columns: 1fr; }
