@@ -242,6 +242,9 @@
     <button class="boton secundario" type="submit" disabled={guardando}>Guardar</button>
     <span class="suave atajo">Ctrl + Enter: guardar y seguir</span>
     <span class="espaciador"></span>
+    {#if acta && acta.estado !== "borrador"}
+      <a class="boton secundario" href="#/certificado/{acta.id}">Fe de bautismo</a>
+    {/if}
     {#if acta && esAdmin()}
       <button class="boton peligro" type="button" onclick={eliminar}>Eliminar acta</button>
     {/if}

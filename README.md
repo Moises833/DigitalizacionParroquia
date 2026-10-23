@@ -33,7 +33,7 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda se prueba con `python scripts/prueba_busqueda.py` (después de `prueba_api.py`).
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda y la fe de bautismo se prueban con `python scripts/prueba_busqueda.py` y `python scripts/prueba_certificados.py` (después de `prueba_api.py`).
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
@@ -80,6 +80,16 @@ En **Buscar** los resultados aparecen mientras se escribe. Se puede combinar:
 
 Cada resultado muestra dónde está (libro, folio, número de acta) y al hacer clic abre el acta junto a la imagen de la página. **Volver a la búsqueda** conserva los filtros. Las actas sin revisar llevan la marca *Sin revisar*.
 
+## Fe de bautismo
+
+1. **Preparar (administrador):** en *Parroquia*, completar nombre, diócesis, ciudad y párroco, y cargar el membrete, el sello y la firma escaneados (PNG con fondo transparente queda mejor). Sin membrete se imprimen los datos de la parroquia como encabezado.
+2. **Emitir:** en *Buscar*, pulsar **Fe de bautismo** en el resultado (o el mismo botón dentro del acta). Se elige para qué fines, quién firma, el cargo, la fecha y el papel (carta, A4 u oficio), y se ve el certificado tal como saldrá.
+3. **Emitir e imprimir** le asigna un número correlativo por año (2026-0001, 2026-0002…) y lo registra con una copia de los datos. Si después se corrige el acta, los certificados ya emitidos no cambian; para reflejar la corrección se emite uno nuevo.
+4. Solo se certifican actas **revisadas**. Un certificado no se edita ni se borra, y un acta con certificados no se puede eliminar.
+5. En *Certificados* está la lista de todos los emitidos, con búsqueda por número o nombre, para reimprimir una copia.
+
+Si se prefiere sellar y firmar a mano, se desmarca «Imprimir el sello y la firma escaneados»: queda el espacio con la marca *L. S.* En la ventana de impresión conviene desmarcar «Encabezados y pies de página». Si alguien imprime la vista previa sin emitir, sale con la leyenda «VISTA PREVIA — SIN VALIDEZ».
+
 ## Instalar en la parroquia
 
 1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
@@ -107,6 +117,6 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | ✅ |
 | 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (falta probar con una clave real) |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | ✅ |
-| 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | Pendiente |
+| 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | ✅ |
 | 7. Respaldos | Respaldo local automático y copia en la nube | Pendiente |
 | 8. Piloto | Prueba con un libro real en la parroquia | Pendiente |

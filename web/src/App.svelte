@@ -14,6 +14,8 @@
   import EditorPagina from "./paginas/EditorPagina.svelte"
   import Ia from "./paginas/Ia.svelte"
   import Buscar from "./paginas/Buscar.svelte"
+  import Certificado from "./paginas/Certificado.svelte"
+  import Certificados from "./paginas/Certificados.svelte"
   import Movil from "./paginas/Movil.svelte"
 
   let estado = $state("cargando") // cargando | configurar | listo | sin-conexion
@@ -21,6 +23,7 @@
   const menu = [
     { id: "inicio", texto: "Inicio" },
     { id: "buscar", texto: "Buscar" },
+    { id: "certificados", texto: "Certificados" },
     { id: "actas", texto: "Actas" },
     { id: "captura", texto: "Captura de páginas" },
     { id: "libros", texto: "Libros" },
@@ -35,7 +38,9 @@
   let rutaPagina = $derived(ruta.actual.startsWith("pagina/") ? ruta.actual.split("/") : [])
   let paginaId = $derived(rutaPagina[1] ?? "")
   let posicionPagina = $derived(parseInt(rutaPagina[2], 10) || 0)
-  let seccion = $derived(paginaId ? (posicionPagina ? "buscar" : "actas") : ruta.actual)
+  // #/certificado/<acta> (emitir) o #/certificado/<acta>/<certificado> (reimprimir)
+  let rutaCertificado = $derived(ruta.actual.startsWith("certificado/") ? ruta.actual.split("/") : [])
+  let seccion = $derived(paginaId ? (posicionPagina ? "buscar" : "actas") : rutaCertificado.length ? "certificados" : ruta.actual)
 
   async function comprobar() {
     estado = "cargando"
@@ -98,6 +103,10 @@
         {#key ruta.actual}<EditorPagina id={paginaId} posicionInicial={posicionPagina} />{/key}
       {:else if ruta.actual === "inicio"}
         <Inicio />
+      {:else if rutaCertificado[1]}
+        {#key ruta.actual}<Certificado actaId={rutaCertificado[1]} certificadoId={rutaCertificado[2] ?? ""} />{/key}
+      {:else if ruta.actual === "certificados"}
+        <Certificados />
       {:else if ruta.actual === "buscar"}
         <Buscar />
       {:else if ruta.actual === "actas"}

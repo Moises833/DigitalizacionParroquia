@@ -163,11 +163,11 @@
 {#if resultados.length}
   <ul class="resultados">
     {#each resultados as a (a.id)}
-      <li>
-        <a class="resultado" href="#/pagina/{a.pagina}/{a.posicion}">
+      <li class="resultado">
           <div class="principal">
             <div class="nombre">
-              {@render marcado([a.nombres, a.apellidos].filter(Boolean).join(" "), resaltadas.nombre)}
+              <!-- El enlace cubre toda la tarjeta (ver .abrir::after) -->
+              <a class="abrir" href="#/pagina/{a.pagina}/{a.posicion}">{@render marcado([a.nombres, a.apellidos].filter(Boolean).join(" "), resaltadas.nombre)}</a>
               {#if a.estado === "borrador"}<span class="etiqueta borrador">Sin revisar</span>{/if}
             </div>
             <div class="datos">
@@ -185,8 +185,8 @@
             <strong>{a.expand?.libro?.numero ?? "Libro"}</strong>
             <span>Folio {a.expand?.pagina?.folio ?? "—"}</span>
             {#if a.numero_acta}<span>Acta N.º {a.numero_acta}</span>{/if}
+            {#if a.estado !== "borrador"}<a class="fe" href="#/certificado/{a.id}">Fe de bautismo</a>{/if}
           </div>
-        </a>
       </li>
     {/each}
   </ul>
@@ -209,12 +209,16 @@
 
   .resultados { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
   .resultado {
-    display: flex; gap: 1rem; justify-content: space-between; align-items: flex-start;
+    position: relative; display: flex; gap: 1rem; justify-content: space-between; align-items: flex-start;
     padding: 0.75rem 1rem; background: var(--superficie); border: 1px solid var(--borde);
-    border-radius: var(--radio); color: inherit; text-decoration: none;
+    border-radius: var(--radio);
   }
-  .resultado:hover, .resultado:focus-visible { border-color: var(--primario); box-shadow: var(--sombra); }
-  .resultado:focus-visible { outline: 3px solid var(--primario-suave); }
+  .resultado:hover, .resultado:focus-within { border-color: var(--primario); box-shadow: var(--sombra); }
+  .abrir { color: inherit; text-decoration: none; }
+  .abrir::after { content: ""; position: absolute; inset: 0; border-radius: var(--radio); }
+  .abrir:focus-visible { outline: none; }
+  .abrir:focus-visible::after { outline: 3px solid var(--primario-suave); }
+  .fe { position: relative; z-index: 1; font-weight: 600; margin-top: 0.25rem; }
   .principal { min-width: 0; }
   .nombre { font-family: var(--fuente-titulo); font-size: 1.15rem; font-weight: 600; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
   .datos { font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0 1.25rem; }
@@ -227,6 +231,7 @@
 
   @media (max-width: 600px) {
     .resultado { flex-direction: column; gap: 0.4rem; }
-    .ubicacion { flex-direction: row; gap: 0.75rem; align-items: baseline; white-space: normal; }
+    .ubicacion { flex-direction: row; flex-wrap: wrap; gap: 0 0.75rem; align-items: baseline; text-align: left; }
+    .fe { margin-top: 0; }
   }
 </style>
