@@ -13,6 +13,7 @@ servidor/
   pb_public/       Interfaz compilada (se genera con npm run build, no se versiona)
 web/               Interfaz en Svelte 5 + Vite
 instalador/        Scripts que se copian al equipo de la parroquia
+docs/              Guía del piloto (se incluye en el paquete)
 scripts/           Herramientas de desarrollo (empaquetado, descarga verificada de PocketBase)
 ```
 
@@ -33,7 +34,7 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda y la fe de bautismo se prueban con `python scripts/prueba_busqueda.py` y `python scripts/prueba_certificados.py` (después de `prueba_api.py`). Los respaldos, con `python scripts/prueba_respaldos.py`: usa una nube S3 simulada y prueba también `restaurar.ps1`; el servidor debe iniciarse con `RESPALDO_SIN_CRON=1`.
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda y la fe de bautismo se prueban con `python scripts/prueba_busqueda.py` y `python scripts/prueba_certificados.py` (después de `prueba_api.py`). Los respaldos, con `python scripts/prueba_respaldos.py`: usa una nube S3 simulada y prueba también `restaurar.ps1`; el servidor debe iniciarse con `RESPALDO_SIN_CRON=1`. Las herramientas del piloto (observaciones, informe, exportación a Excel, cambio de contraseña), con `python scripts/prueba_piloto.py` (después de `prueba_api.py`).
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
@@ -104,18 +105,28 @@ El sistema se respalda solo mientras la computadora está encendida: apenas se e
 ## Instalar en la parroquia
 
 1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
-2. Copiar `dist\SistemaBautismos.zip` al equipo de la parroquia y descomprimirlo en una ruta corta (por ejemplo `C:\SistemaBautismos`).
+2. Copiar `dist\SistemaBautismos.zip` al equipo de la parroquia y descomprimirlo en una ruta corta (por ejemplo `C:\SistemaBautismos`): con una ruta muy larga Windows no puede iniciar `pocketbase.exe`.
 3. Ejecutar `instalar_sistema.bat` una sola vez: crea la cuenta de mantenimiento, abre el puerto 8090 solo para la red local y crea los accesos directos.
 4. Abrir **Sistema de Bautismos** desde el Escritorio.
 
 Para **actualizar**, reemplazar todo excepto las carpetas `pb_data` (ahí están los datos y las imágenes) y `respaldos`.
 
+## Piloto
+
+La guía para llevar el sistema a la parroquia con un libro real está en [docs/PILOTO.md](docs/PILOTO.md): qué decidir con la parroquia, qué llevar, la instalación, la capacitación, el simulacro de restauración y cómo evaluar el resultado. Para el día a día:
+
+- **Ayuda** (menú, todos los usuarios): guía rápida de una página para la secretaría, lista para imprimir.
+- **Anotar un problema** (menú, todos): cada persona anota un problema, una duda o una sugerencia; se guarda con la pantalla donde estaba. El administrador las responde y las marca resueltas, y cada uno ve las respuestas a las suyas.
+- **Informe del piloto** (administrador): avance por libro, ritmo de trabajo por persona (tiempo estimado por cuándo se guardó cada acta), actividad por día, acierto de la IA campo por campo (cuántos datos propuestos se aceptaron sin cambios) y espacio usado.
+- **Excel:** desde el informe, cada libro se descarga como CSV (punto y coma, UTF-8) que abren Excel y LibreOffice, para revisar las actas o entregarlas a la diócesis.
+- **Contraseña olvidada:** en *Usuarios*, el administrador pone una contraseña nueva sin necesitar la anterior.
+
 ## Roles
 
 | Rol | Puede |
 |---|---|
-| Administrador | Todo: usuarios, datos de la parroquia, eliminar registros, ver la auditoría |
-| Secretaría | Registrar y editar libros, páginas y actas |
+| Administrador | Todo: usuarios y contraseñas, datos de la parroquia, eliminar registros, ver la auditoría, informe del piloto y exportación |
+| Secretaría | Registrar y editar libros, páginas y actas; buscar y emitir la fe de bautismo |
 
 Cada creación, edición o eliminación queda registrada en la colección `auditoria` con el usuario y los valores anteriores y nuevos.
 
@@ -130,4 +141,4 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | ✅ |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | ✅ |
 | 7. Respaldos | Respaldo local automático y copia en la nube | ✅ (falta probar con una nube real) |
-| 8. Piloto | Prueba con un libro real en la parroquia | Pendiente |
+| 8. Piloto | Guía del piloto, ayuda, observaciones, informe y exportación; ensayo de instalación | ✅ preparado (falta hacerlo en la parroquia) |

@@ -14,6 +14,8 @@
   import EditorPagina from "./paginas/EditorPagina.svelte"
   import Ia from "./paginas/Ia.svelte"
   import Respaldos from "./paginas/Respaldos.svelte"
+  import Piloto from "./paginas/Piloto.svelte"
+  import AnotarObservacion from "./componentes/AnotarObservacion.svelte"
   import Buscar from "./paginas/Buscar.svelte"
   import Certificado from "./paginas/Certificado.svelte"
   import Certificados from "./paginas/Certificados.svelte"
@@ -32,6 +34,7 @@
     { id: "parroquia", texto: "Parroquia", soloAdmin: true },
     { id: "ia", texto: "Inteligencia artificial", soloAdmin: true },
     { id: "respaldos", texto: "Respaldos", soloAdmin: true },
+    { id: "piloto", texto: "Informe del piloto", soloAdmin: true },
   ]
 
   // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
@@ -92,11 +95,13 @@
                aria-current={seccion === item.id ? "page" : undefined}>{item.texto}</a>
           </li>
         {/each}
+        <li><a href="/ayuda.html" target="_blank" rel="noopener">Ayuda</a></li>
       </ul>
       <div class="usuario">
         <div>{sesion.usuario.name || sesion.usuario.email}</div>
         <div class="suave rol">{sesion.usuario.rol === "admin" ? "Administrador" : "Secretaría"}</div>
         <button class="boton secundario" onclick={cerrarSesion}>Cerrar sesión</button>
+        <AnotarObservacion />
       </div>
     </nav>
 
@@ -125,6 +130,8 @@
         <Ia />
       {:else if ruta.actual === "respaldos" && esAdmin()}
         <Respaldos />
+      {:else if ruta.actual === "piloto" && esAdmin()}
+        <Piloto />
       {:else}
         <h1>Página no encontrada</h1>
         <a href="#/inicio">Volver al inicio</a>

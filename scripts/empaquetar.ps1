@@ -31,6 +31,7 @@ foreach ($dir in "pb_migrations", "pb_hooks", "pb_public") {
     Copy-Item (Join-Path $raiz "servidor\$dir") (Join-Path $destino $dir) -Recurse
 }
 Copy-Item (Join-Path $raiz "instalador\*") $destino
+Copy-Item (Join-Path $raiz "docs") (Join-Path $destino "docs") -Recurse
 
 Write-Host "[4/4] Comprimiendo..."
 $zip = "$destino.zip"

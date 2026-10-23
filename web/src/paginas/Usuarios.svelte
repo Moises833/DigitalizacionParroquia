@@ -34,6 +34,25 @@
     }
   }
 
+  // Contraseña nueva para alguien que olvidó la suya (solo el administrador).
+  let cambiando = $state("")
+  let nuevaClave = $state("")
+  const enfocar = (campo) => campo.focus()
+
+  async function cambiarClave(evento, u) {
+    evento.preventDefault()
+    error = ""
+    aviso = ""
+    try {
+      await pb.collection("users").update(u.id, { password: nuevaClave, passwordConfirm: nuevaClave })
+      aviso = `Contraseña de ${u.email} cambiada. Désela en persona.`
+      cambiando = ""
+      nuevaClave = ""
+    } catch (err) {
+      error = mensajeError(err)
+    }
+  }
+
   async function eliminar(u) {
     if (!confirm(`¿Eliminar al usuario ${u.email}?`)) return
     error = ""
@@ -103,10 +122,27 @@
           <td>{u.rol === "admin" ? "Administrador" : "Secretaría"}</td>
           <td class="acciones">
             {#if u.id !== sesion.usuario.id}
+              <button class="boton secundario" onclick={() => { cambiando = cambiando === u.id ? "" : u.id; nuevaClave = "" }}>
+                Cambiar contraseña
+              </button>
               <button class="boton peligro" onclick={() => eliminar(u)}>Eliminar</button>
             {/if}
           </td>
         </tr>
+        {#if cambiando === u.id}
+          <tr>
+            <td colspan="4">
+              <form class="fila clave" onsubmit={(e) => cambiarClave(e, u)}>
+                <div class="campo">
+                  <label for="nueva-{u.id}">Contraseña nueva para {u.name || u.email}</label>
+                  <input id="nueva-{u.id}" type="password" bind:value={nuevaClave} required minlength="8" autocomplete="new-password" use:enfocar />
+                </div>
+                <button class="boton" type="submit">Guardar</button>
+                <button class="boton secundario" type="button" onclick={() => (cambiando = "")}>Cancelar</button>
+              </form>
+            </td>
+          </tr>
+        {/if}
       {/each}
     </tbody>
   </table>
@@ -117,5 +153,8 @@
   .encabezado h1 { margin: 0; }
   .formulario { margin-bottom: 1.5rem; }
   .acciones { text-align: right; }
-  .acciones .boton { min-height: 36px; padding: 0.3rem 0.8rem; }
+  .acciones { white-space: nowrap; }
+  .acciones .boton { min-height: 36px; padding: 0.3rem 0.8rem; margin-left: 0.4rem; }
+  .clave { align-items: flex-end; }
+  .clave .campo { margin-bottom: 0; max-width: 340px; }
 </style>

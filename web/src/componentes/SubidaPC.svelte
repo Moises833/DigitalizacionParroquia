@@ -115,9 +115,8 @@
     await Promise.all(Array.from({ length: SIMULTANEAS }, trabajador))
     subiendo = false
     const fallidas = filas.filter((f) => f.estado === "error").length
-    resumen = fallidas
-      ? `${terminadas} páginas subidas, ${fallidas} con error.`
-      : `${terminadas} páginas subidas.`
+    const subidas = terminadas === 1 ? "1 página subida" : `${terminadas} páginas subidas`
+    resumen = fallidas ? `${subidas}, ${fallidas} con error.` : `${subidas}.`
   }
 
   function soltar(evento) {
@@ -176,7 +175,7 @@
 
     <div class="fila acciones">
       <button class="boton" onclick={subirTodo} disabled={subiendo || pendientes.length === 0}>
-        {subiendo ? `Subiendo… (${terminadas}/${filas.length})` : `Subir ${pendientes.length} páginas`}
+        {subiendo ? `Subiendo… (${terminadas}/${filas.length})` : pendientes.length === 1 ? "Subir 1 página" : `Subir ${pendientes.length} páginas`}
       </button>
       {#if terminadas && !subiendo}
         <button class="boton secundario" onclick={limpiarSubidas}>Quitar las ya subidas</button>
