@@ -19,12 +19,12 @@ routerUse((e) => {
 // --- Texto de búsqueda sin acentos ------------------------------------------
 
 onRecordCreate((e) => {
-  e.record.set("busqueda", require(`${__hooks}/util.js`).textoBusqueda(e.record))
+  require(`${__hooks}/util.js`).asignarBusqueda(e.record)
   e.next()
 }, "actas_bautismo")
 
 onRecordUpdate((e) => {
-  e.record.set("busqueda", require(`${__hooks}/util.js`).textoBusqueda(e.record))
+  require(`${__hooks}/util.js`).asignarBusqueda(e.record)
   e.next()
 }, "actas_bautismo")
 

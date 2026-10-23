@@ -33,7 +33,7 @@ cd web; npm install; npm run dev
 
 La interfaz queda en http://localhost:5173 (Vite reenvía `/api` al puerto 8090). La primera vez pide registrar la parroquia y el administrador.
 
-Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`.
+Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en orden `python scripts/prueba_api.py` (reglas de acceso, auditoría, búsqueda), `python scripts/prueba_captura.py` (vinculación del teléfono, folios, archivos protegidos) y `python scripts/prueba_actas.py` (recuadros, estado de las páginas, quién creó y revisó cada acta). Al final, `python scripts/prueba_ia.py` (cola de IA contra un Gemini simulado: no sale nada a internet); para esta, el servidor debe iniciarse con `IA_URL_BASE=http://127.0.0.1:8099 IA_SIN_CRON=1`. La búsqueda se prueba con `python scripts/prueba_busqueda.py` (después de `prueba_api.py`).
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
@@ -70,6 +70,16 @@ La IA (Google Gemini) lee cada acta recortada y propone los datos; **una persona
 
 Para cambiar de proveedor de IA más adelante basta con reemplazar `pedirGemini()` en `servidor/pb_hooks/ia.js`.
 
+## Búsqueda
+
+En **Buscar** los resultados aparecen mientras se escribe. Se puede combinar:
+
+- **Nombre del bautizado:** nombres o apellidos, en cualquier orden y sin importar acentos ni mayúsculas ("nunez maria" encuentra a María José Núñez Ávila).
+- **Padres** y **Padrinos:** buscan solo en esos campos, así el nombre de una madrina no aparece como bautizada.
+- **Libro (tomo)**, **Año de bautizo** (un año, "1981", o un rango, "1980-1985"), **Folio** y **N.º de acta**.
+
+Cada resultado muestra dónde está (libro, folio, número de acta) y al hacer clic abre el acta junto a la imagen de la página. **Volver a la búsqueda** conserva los filtros. Las actas sin revisar llevan la marca *Sin revisar*.
+
 ## Instalar en la parroquia
 
 1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
@@ -96,7 +106,7 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | ✅ |
 | 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | ✅ |
 | 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (falta probar con una clave real) |
-| 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | Pendiente |
+| 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | ✅ |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | Pendiente |
 | 7. Respaldos | Respaldo local automático y copia en la nube | Pendiente |
 | 8. Piloto | Prueba con un libro real en la parroquia | Pendiente |

@@ -9,7 +9,8 @@
   import LienzoSegmentos from "../componentes/LienzoSegmentos.svelte"
   import FormularioActa from "../componentes/FormularioActa.svelte"
 
-  let { id } = $props()
+  // posicionInicial: acta a mostrar al abrir (desde la búsqueda); 0 = la primera sin transcribir.
+  let { id, posicionInicial = 0 } = $props()
 
   const ESPERA_GUARDADO = 700
 
@@ -63,8 +64,16 @@
       libro = p.expand?.libro ?? null
       actas = lista
       segmentos = Array.isArray(p.segmentos) ? p.segmentos : []
+      // Actas sin recuadro en la página (cargadas por otra vía): se muestran con su
+      // propio recorte o con una franja provisional. Se guarda solo si se edita.
+      const ultimaPosicion = Math.max(0, ...lista.map((a) => a.posicion ?? 0))
+      if (segmentos.length < ultimaPosicion) {
+        const provisorias = franjas(ultimaPosicion)
+        const recorteDe = (pos) => lista.find((a) => a.posicion === pos && typeof a.recorte?.alto === "number")?.recorte
+        segmentos = provisorias.map((f, i) => segmentos[i] ?? recorteDe(i + 1) ?? f)
+      }
       const sinActa = segmentos.findIndex((_, i) => !lista.some((a) => a.posicion === i + 1))
-      seleccionado = Math.max(0, sinActa)
+      seleccionado = posicionInicial >= 1 && posicionInicial <= segmentos.length ? posicionInicial - 1 : Math.max(0, sinActa)
 
       const [ministro, lugar, ultima, listaTrabajos, estado] = await Promise.all([
         pb.send("/api/sugerencias/ministro", {}),
@@ -259,7 +268,11 @@
 {:else}
   <div class="encabezado">
     <div>
-      <a href="#/actas" class="volver">← Actas</a>
+      {#if posicionInicial}
+        <a href="#/buscar" class="volver">← Volver a la búsqueda</a>
+      {:else}
+        <a href="#/actas" class="volver">← Actas</a>
+      {/if}
       <h1>{libro?.numero ?? "Libro"} · Folio {pagina.folio}</h1>
     </div>
     <span class="espaciador"></span>

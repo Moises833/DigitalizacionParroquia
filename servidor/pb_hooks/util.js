@@ -53,4 +53,14 @@ function diferencias(antes, despues) {
   return [cambiosAntes, cambiosDespues]
 }
 
-module.exports = { normalizar, textoBusqueda, registrarAuditoria, diferencias }
+// Campos normalizados para filtrar por persona sin importar acentos ni mayúsculas:
+// "busqueda" (todo), "b_nombre" (bautizado), "b_padres" y "b_padrinos".
+function asignarBusqueda(record) {
+  const unir = (...campos) => campos.map((c) => normalizar(record.getString(c))).filter(Boolean).join(" | ")
+  record.set("busqueda", textoBusqueda(record))
+  record.set("b_nombre", unir("nombres", "apellidos"))
+  record.set("b_padres", unir("padre", "madre"))
+  record.set("b_padrinos", unir("padrino", "madrina"))
+}
+
+module.exports = { normalizar, textoBusqueda, asignarBusqueda, registrarAuditoria, diferencias }

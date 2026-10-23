@@ -13,12 +13,14 @@
   import Actas from "./paginas/Actas.svelte"
   import EditorPagina from "./paginas/EditorPagina.svelte"
   import Ia from "./paginas/Ia.svelte"
+  import Buscar from "./paginas/Buscar.svelte"
   import Movil from "./paginas/Movil.svelte"
 
   let estado = $state("cargando") // cargando | configurar | listo | sin-conexion
 
   const menu = [
     { id: "inicio", texto: "Inicio" },
+    { id: "buscar", texto: "Buscar" },
     { id: "actas", texto: "Actas" },
     { id: "captura", texto: "Captura de páginas" },
     { id: "libros", texto: "Libros" },
@@ -29,8 +31,11 @@
 
   // La pantalla del teléfono (#/movil/<token>) no usa sesión de usuario.
   let tokenMovil = $derived(ruta.actual.startsWith("movil/") ? ruta.actual.slice("movil/".length) : "")
-  let paginaId = $derived(ruta.actual.startsWith("pagina/") ? ruta.actual.slice("pagina/".length) : "")
-  let seccion = $derived(paginaId ? "actas" : ruta.actual)
+  // #/pagina/<id> o #/pagina/<id>/<posición> (al abrir un acta desde la búsqueda)
+  let rutaPagina = $derived(ruta.actual.startsWith("pagina/") ? ruta.actual.split("/") : [])
+  let paginaId = $derived(rutaPagina[1] ?? "")
+  let posicionPagina = $derived(parseInt(rutaPagina[2], 10) || 0)
+  let seccion = $derived(paginaId ? (posicionPagina ? "buscar" : "actas") : ruta.actual)
 
   async function comprobar() {
     estado = "cargando"
@@ -90,9 +95,11 @@
 
     <main class="contenido" class:ancho={paginaId}>
       {#if paginaId}
-        {#key paginaId}<EditorPagina id={paginaId} />{/key}
+        {#key ruta.actual}<EditorPagina id={paginaId} posicionInicial={posicionPagina} />{/key}
       {:else if ruta.actual === "inicio"}
         <Inicio />
+      {:else if ruta.actual === "buscar"}
+        <Buscar />
       {:else if ruta.actual === "actas"}
         <Actas />
       {:else if ruta.actual === "libros"}
