@@ -81,9 +81,9 @@ if ($origen -ne $Destino) {
     if ($LASTEXITCODE -ge 8) { Salir "No se pudieron copiar los archivos a $Destino (codigo $LASTEXITCODE)." }
     # Los archivos vienen de un zip descargado: se desbloquean para que Windows
     # no pregunte cada vez que se abre el sistema.
-    Get-ChildItem $origen -Recurse -File |
-        ForEach-Object { Join-Path $Destino $_.FullName.Substring($origen.Length) } |
-        Unblock-File -ErrorAction SilentlyContinue
+    Get-ChildItem -LiteralPath $origen -Recurse -File | ForEach-Object {
+        Unblock-File -LiteralPath (Join-Path $Destino $_.FullName.Substring($origen.Length)) -ErrorAction SilentlyContinue
+    }
 }
 if ($actualizacion) {
     Write-Host "  Sistema actualizado. Los datos y los respaldos se conservaron." -ForegroundColor Green

@@ -43,11 +43,18 @@ function Entrar($clave) {
 try {
     Expand-Archive $zip -DestinationPath $descarga
     $paquete = Join-Path $descarga "SistemaBautismos"
+    # Marca de "descargado de internet", como la deja el Explorador al extraer un zip bajado.
+    Get-ChildItem -LiteralPath $paquete -Recurse -File | ForEach-Object {
+        Set-Content -LiteralPath $_.FullName -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3"
+    }
 
     # --- Instalacion nueva ----------------------------------------------------
     $r = Instalar $paquete $destino
     Check "instala desde una carpeta con espacios y parentesis" ($r.codigo -eq 0) $r.salida
     Check "copia el sistema a la carpeta definitiva" ((Test-Path "$destino\pocketbase.exe") -and (Test-Path "$destino\pb_hooks") -and (Test-Path "$destino\pb_data\data.db"))
+    $marcados = @(Get-ChildItem -LiteralPath $destino -Recurse -File -Exclude *.db |
+        Where-Object { Get-Item -LiteralPath $_.FullName -Stream Zone.Identifier -ErrorAction SilentlyContinue })
+    Check "quita la marca de internet (Windows no pregunta al abrir)" ($marcados.Count -eq 0) ($marcados | Select-Object -First 3 -ExpandProperty Name)
     $clave = if ($r.salida -match "Contrasena de mantenimiento: (\S+)") { $Matches[1] } else { "" }
     Check "genera una contrasena de mantenimiento de 16 caracteres" ($clave.Length -eq 16) $r.salida
 
@@ -85,6 +92,29 @@ try {
         Stop-Process -Id $servidor.Id -Force
         Start-Sleep -Milliseconds 500
     }
+
+    # --- El .bat y las preguntas ------------------------------------------------
+    $otro = Join-Path $base "Otra instalacion"
+    $salida = "`r`n" | cmd /c "`"$paquete\instalar_sistema.bat`" -Destino `"$otro`" -Confirmar -SinFirewall -SinAccesos -SinAbrir -Puerto $puerto" 2>&1 | Out-String
+    Check "instalar_sistema.bat funciona desde una carpeta con espacios y parentesis" ($LASTEXITCODE -eq 0 -and $salida -match "Instalacion completa" -and (Test-Path "$otro\pb_data\data.db")) $salida
+
+    # Una persona que responde Enter a todo (Read-Host simulado: la consola real no se puede automatizar).
+    $enter = Join-Path $base "enter.ps1"
+    Set-Content $enter @'
+param($Script, $Destino, $Puerto)
+function global:Read-Host {
+    param([Parameter(Position = 0)]$Prompt, [switch]$AsSecureString)
+    Write-Host "[pregunta] $Prompt"
+    if ($AsSecureString) { return (New-Object Security.SecureString) }
+    return ""
+}
+& $Script -Destino $Destino -SinFirewall -SinAccesos -SinAbrir -Puerto $Puerto
+'@
+    $nuevo = Join-Path $base "Con preguntas"
+    $salida = & powershell -NoProfile -ExecutionPolicy Bypass -File $enter -Script "$paquete\instalar.ps1" -Destino $nuevo -Puerto $puerto 2>&1 | Out-String
+    $preguntas = ([regex]::Matches($salida, "\[pregunta\]")).Count
+    Check "responder Enter a todo instala con las opciones recomendadas" ($LASTEXITCODE -eq 0 -and $preguntas -eq 3 -and
+        $salida -match "mantenimiento@parroquia.local" -and $salida -match "Contrasena de mantenimiento: \S{16}") $salida
 
     # --- Errores -----------------------------------------------------------------
     $ajena = Join-Path $base "Carpeta ajena"
