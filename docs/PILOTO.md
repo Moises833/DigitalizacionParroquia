@@ -21,7 +21,7 @@ Esta guía es para quien instala y acompaña el piloto. La persona de la secreta
 Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el párroco):
 
 1. **Qué libro.** Uno con letra legible, de 100 a 300 actas, que se consulte seguido (por ejemplo, de 1980 a 2000). Evitar el más antiguo o el más deteriorado para el piloto.
-2. **La IA (Gemini gratis).** En el plan gratuito, Google puede usar lo que se le envía y personas de Google pueden revisarlo; las actas tienen datos personales. Opciones: aprobarlo, activar la facturación de Google Cloud (Google no usa los datos), o hacer el piloto sin IA. Si se aprueba, hace falta una cuenta de Google de la parroquia.
+2. **La IA (Gemini gratis): aprobada.** La parroquia autorizó usar el plan gratuito sabiendo que Google puede usar lo que se le envía y que personas de Google pueden revisarlo. Hace falta una **cuenta de Google de la parroquia** (no una personal) para crear la clave. Si más adelante se quiere que Google no use los datos, basta con activar la facturación de Google Cloud en esa cuenta: la clave sigue siendo la misma.
 3. **La copia en la nube.** Una copia de todas las actas e imágenes en un servicio externo (por ejemplo Backblaze B2, 10 GB gratis). Si se aprueba: cuenta con el correo de la parroquia.
 4. **Disco externo** para el respaldo local (si la parroquia no tiene uno, llevarlo): conectado siempre a la PC.
 5. **Quién participa.** Quién carga (secretaría) y quién es administrador (párroco o quien él designe).
@@ -47,7 +47,7 @@ Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el 
 5. **Parroquia:** completar los datos y cargar membrete, sello y firma.
 6. **Usuarios:** crear la cuenta de la secretaría (rol *Secretaría*).
 7. **Respaldos:** en *Carpeta*, poner la ruta del disco externo (por ejemplo `E:\Respaldos Bautismos`), *Guardar*, *Probar* y *Respaldar ahora*. Si se aprobó la nube, cargar sus datos y *Probar*.
-8. **Inteligencia artificial** (si se aprobó): pegar la clave de Gemini, *Probar conexión*, elegir un modelo «flash» y activarla.
+8. **Inteligencia artificial:** con la cuenta de Google de la parroquia, entrar a https://aistudio.google.com/apikey y crear una clave (*Create API key*). En el sistema: pegarla en *Clave de Gemini* → *Guardar clave* → *Probar conexión*. Si el modelo configurado ya no existe, el sistema elige otro «flash»: pulsar *Guardar ajustes*. Marcar *IA activada* y *Guardar ajustes*. Anotar en la hoja de datos qué cuenta se usó; la clave no hace falta anotarla (se puede crear otra).
 9. **Libros:** registrar el libro del piloto (número o nombre como figura en el lomo, y años).
 
 ## 5. Día 1: capacitación con la secretaría (1 a 2 horas)
@@ -103,6 +103,7 @@ Con eso se decide si se sigue con los demás libros, qué ajustar antes, y si co
 | Se cortó la luz | Lo guardado está a salvo. Al encender, el sistema arranca solo y el respaldo se pone al día. |
 | Se olvidó la contraseña de la secretaría | El administrador la cambia en *Usuarios*. |
 | Se olvidó la del administrador | Con la cuenta de mantenimiento, en `http://127.0.0.1:8090/_/`. |
+| La IA no devuelve nada | *Inteligencia artificial* → *Estado*. Sin internet, espera y sigue sola. Si se llegó al límite diario del plan gratis, sigue al día siguiente. Si dice que la clave no sirve, crear otra en aistudio.google.com y *Probar conexión*. Mientras tanto se puede transcribir a mano. |
 | Inicio avisa que no hay respaldo | *Respaldos*: revisar el error (disco desconectado, sin internet) y *Respaldar ahora*. |
 
 ## 10. Hoja de datos de la instalación

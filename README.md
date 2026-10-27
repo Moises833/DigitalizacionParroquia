@@ -67,7 +67,9 @@ La IA (Google Gemini) lee cada acta recortada y propone los datos; **una persona
 3. **Cola:** el servidor envía unas pocas por minuto (8 por defecto, con un máximo diario) mientras haya internet. Si Google avisa que se llegó al límite, espera y sigue solo; tras 3 errores un acta queda marcada y se puede reintentar.
 4. **Revisar:** al abrir el acta, el formulario ya viene lleno. En amarillo lo leído por la IA; en rojo lo que no leyó con seguridad. Las fechas se vuelven a calcular desde el texto que leyó la IA, y se marcan si no coinciden con su conversión. Al guardar, el acta queda como de origen «ia» y se conserva lo que propuso la IA.
 
-**Privacidad:** en el plan gratuito, Google puede usar lo enviado para mejorar sus productos y personas de Google pueden revisarlo. Las actas tienen datos personales: la parroquia debe aprobarlo o activar la facturación de Google Cloud, con la que Google no usa los datos.
+**Privacidad:** en el plan gratuito, Google puede usar lo enviado para mejorar sus productos y personas de Google pueden revisarlo. Las actas tienen datos personales: la parroquia lo autorizó para el piloto. Si más adelante se prefiere que Google no use los datos, se activa la facturación de Google Cloud en la misma cuenta, sin cambiar la clave.
+
+Si Google retira el modelo configurado, *Probar conexión* lo detecta y elige el «flash» estable más nuevo que ofrezca la clave.
 
 Para cambiar de proveedor de IA más adelante basta con reemplazar `pedirGemini()` en `servidor/pb_hooks/ia.js`.
 
@@ -137,7 +139,7 @@ Cada creación, edición o eliminación queda registrada en la colección `audit
 | 1. Base | Esquema, usuarios y roles, auditoría, interfaz, instalador | ✅ |
 | 2. Captura | Subida de varias fotos desde la PC y desde el teléfono (QR), compresión en el navegador | ✅ |
 | 3. Segmentación y captura manual | Separar las actas de cada página; formulario asistido | ✅ |
-| 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (falta probar con una clave real) |
+| 4. IA | Cola de transcripción con Gemini (proveedor intercambiable) y revisión | ✅ (uso autorizado; la clave real se carga en la parroquia) |
 | 5. Búsqueda | Filtros por nombre, padres, padrinos, libro, año y folio | ✅ |
 | 6. Fe de bautismo | Certificado con membrete y sello, listo para imprimir | ✅ |
 | 7. Respaldos | Respaldo local automático y copia en la nube | ✅ (falta probar con una nube real) |
