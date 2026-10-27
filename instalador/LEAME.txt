@@ -1,0 +1,20 @@
+﻿SISTEMA DE BAUTISMOS - CÓMO INSTALAR
+====================================
+
+Requisitos: Windows 10 u 11 de 64 bits. No hace falta instalar nada más.
+
+1. Descargar SistemaBautismos.zip.
+2. Clic derecho sobre el zip -> "Extraer todo..." -> "Extraer".
+3. En la carpeta que se abre, doble clic en "instalar_sistema.bat".
+   Si Windows avisa "Windows protegió su PC": "Más información" -> "Ejecutar de todas formas".
+4. Responder con Enter a todo (las respuestas por defecto son las recomendadas).
+   - Se genera la contraseña de mantenimiento: anotarla y guardarla fuera de la PC.
+   - Windows pide permiso de administrador para que el teléfono pueda conectarse: "Sí".
+5. Listo: el sistema queda en C:\SistemaBautismos y se abre en el navegador.
+   Después se abre con "Sistema de Bautismos" en el Escritorio.
+   La carpeta descargada y el zip se pueden borrar.
+
+PARA ACTUALIZAR a una versión nueva: hacer lo mismo con el zip nuevo.
+Los datos, las imágenes y los respaldos se conservan.
+
+Guía completa del piloto: carpeta docs, archivo PILOTO.md.

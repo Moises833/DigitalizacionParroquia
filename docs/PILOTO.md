@@ -29,7 +29,7 @@ Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el 
 
 ## 3. Qué llevar
 
-- Pendrive con `SistemaBautismos.zip` (se genera con `scripts\empaquetar.ps1`) y esta guía.
+- Pendrive con `SistemaBautismos.zip` ([descargar la última versión](https://github.com/Moises833/DigitalizacionParroquia/releases/latest/download/SistemaBautismos.zip)), por si la parroquia no tiene internet, y esta guía.
 - Disco externo, si hace falta.
 - El membrete, el sello y la firma del párroco **escaneados o fotografiados** sobre papel blanco, con buena luz (mejor PNG con fondo transparente).
 - Datos de la parroquia: nombre, diócesis, dirección, ciudad, teléfono y párroco.
@@ -38,12 +38,13 @@ Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el 
 ## 4. Día 1: instalación (alrededor de 1 hora)
 
 1. **Revisar la computadora:** Windows de 64 bits (Configuración → Sistema → Información), al menos 10 GB libres, y que el teléfono y la PC estén en la misma red wifi si se van a sacar fotos con el teléfono.
-2. Copiar el zip a `C:\` y descomprimirlo en `C:\SistemaBautismos` (ruta corta, sin acentos).
-3. Ejecutar `instalar_sistema.bat`:
-   - pide una **cuenta de mantenimiento** (correo y contraseña de al menos 10 caracteres). Es para soporte técnico: anotarla en la hoja del final y guardarla fuera de la PC.
-   - pide permiso de administrador de Windows para abrir el puerto 8090 solo a la red local (para el teléfono).
-   - pregunta si el servidor arranca con Windows: responder **S**.
-4. Abrir **Sistema de Bautismos** desde el Escritorio. La primera vez pide el nombre de la parroquia y crea el **administrador**.
+2. Copiar el zip a la PC (o descargarlo ahí), clic derecho → *Extraer todo…* en cualquier carpeta.
+3. Doble clic en `instalar_sistema.bat` y responder con **Enter** a todo. Si Windows avisa «Windows protegió su PC»: *Más información* → *Ejecutar de todas formas*.
+   - Copia el sistema a `C:\SistemaBautismos`.
+   - Crea la **cuenta de mantenimiento** y muestra su contraseña: anotarla en la hoja del final y guardarla fuera de la PC. Es para soporte técnico, no para el uso diario.
+   - Pide permiso de administrador de Windows para abrir el puerto 8090 solo a la red local (para el teléfono): responder **Sí**.
+   - Deja el sistema arrancando solo con Windows y lo abre en el navegador.
+4. La primera vez el sistema pide el nombre de la parroquia y crea el **administrador**. Después se abre con **Sistema de Bautismos** del Escritorio. La carpeta descargada y el zip se pueden borrar.
 5. **Parroquia:** completar los datos y cargar membrete, sello y firma.
 6. **Usuarios:** crear la cuenta de la secretaría (rol *Secretaría*).
 7. **Respaldos:** en *Carpeta*, poner la ruta del disco externo (por ejemplo `E:\Respaldos Bautismos`), *Guardar*, *Probar* y *Respaldar ahora*. Si se aprobó la nube, cargar sus datos y *Probar*.

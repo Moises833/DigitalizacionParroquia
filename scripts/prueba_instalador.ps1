@@ -1,0 +1,108 @@
+# Prueba del instalador con el paquete ya armado (dist\SistemaBautismos.zip):
+# instalacion desde una carpeta con espacios, cuenta de mantenimiento generada,
+# actualizacion sin perder datos y los casos de error. No toca el Firewall, el
+# Escritorio ni C:\SistemaBautismos: todo queda en una carpeta temporal.
+# Uso: powershell -ExecutionPolicy Bypass -File scripts\prueba_instalador.ps1
+
+$ErrorActionPreference = "Stop"
+$raiz = Split-Path $PSScriptRoot -Parent
+$zip = Join-Path $raiz "dist\SistemaBautismos.zip"
+if (-not (Test-Path $zip)) { throw "Falta ${zip}: ejecutar antes scripts\empaquetar.ps1" }
+
+$base = Join-Path ([IO.Path]::GetTempPath()) ("prueba_instalador_" + [guid]::NewGuid().ToString("N").Substring(0, 6))
+$descarga = Join-Path $base "Mis descargas (1)"
+$destino = Join-Path $base "SistemaBautismos"
+$puerto = 8097
+$script:fallas = 0
+
+function Check($nombre, $cond, $extra = "") {
+    if ($cond) { Write-Host "OK    $nombre" } else { Write-Host "FALLA $nombre -> $extra" -ForegroundColor Red; $script:fallas++ }
+}
+
+function Instalar($carpeta, $dest, [switch]$Abierto) {
+    $salida = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $carpeta "instalar.ps1") `
+        -Destino $dest -Confirmar -SinFirewall -SinAccesos -SinAbrir -Puerto $puerto 2>&1 | Out-String
+    return @{ codigo = $LASTEXITCODE; salida = $salida }
+}
+
+function Iniciar {
+    $p = Start-Process (Join-Path $destino "pocketbase.exe") -ArgumentList "serve", "--http=127.0.0.1:$puerto" `
+        -WorkingDirectory $destino -WindowStyle Hidden -PassThru
+    for ($i = 0; $i -lt 40; $i++) {
+        try { Invoke-RestMethod "http://127.0.0.1:$puerto/api/health" | Out-Null; return $p } catch { Start-Sleep -Milliseconds 250 }
+    }
+    throw "El servidor no arranco"
+}
+
+function Entrar($clave) {
+    $cuerpo = @{ identity = "mantenimiento@parroquia.local"; password = $clave } | ConvertTo-Json
+    return (Invoke-RestMethod "http://127.0.0.1:$puerto/api/collections/_superusers/auth-with-password" `
+        -Method Post -ContentType "application/json" -Body $cuerpo).token
+}
+
+try {
+    Expand-Archive $zip -DestinationPath $descarga
+    $paquete = Join-Path $descarga "SistemaBautismos"
+
+    # --- Instalacion nueva ----------------------------------------------------
+    $r = Instalar $paquete $destino
+    Check "instala desde una carpeta con espacios y parentesis" ($r.codigo -eq 0) $r.salida
+    Check "copia el sistema a la carpeta definitiva" ((Test-Path "$destino\pocketbase.exe") -and (Test-Path "$destino\pb_hooks") -and (Test-Path "$destino\pb_data\data.db"))
+    $clave = if ($r.salida -match "Contrasena de mantenimiento: (\S+)") { $Matches[1] } else { "" }
+    Check "genera una contrasena de mantenimiento de 16 caracteres" ($clave.Length -eq 16) $r.salida
+
+    $servidor = Iniciar
+    try {
+        $token = Entrar $clave
+        Check "la cuenta de mantenimiento entra con esa contrasena" ([bool]$token)
+        $libro = Invoke-RestMethod "http://127.0.0.1:$puerto/api/collections/libros/records" -Method Post `
+            -Headers @{ Authorization = $token } -ContentType "application/json" `
+            -Body (@{ numero = "Tomo de prueba"; sacramento = "bautismo" } | ConvertTo-Json)
+        Check "el sistema instalado guarda datos" ([bool]$libro.id)
+        $r2 = Instalar $paquete $destino
+        Check "no actualiza con el sistema abierto" ($r2.codigo -ne 0 -and $r2.salida -match "abierto") $r2.salida
+    } finally {
+        Stop-Process -Id $servidor.Id -Force
+        Start-Sleep -Milliseconds 500
+    }
+
+    # --- Actualizacion ---------------------------------------------------------
+    New-Item -ItemType Directory -Force "$destino\respaldos" | Out-Null
+    Set-Content "$destino\respaldos\copia.txt" "respaldo"
+    Set-Content "$destino\pb_hooks\viejo.pb.js" "// archivo de una version anterior"
+    $r = Instalar $paquete $destino
+    Check "actualiza un sistema instalado" ($r.codigo -eq 0 -and $r.salida -match "actualizado") $r.salida
+    Check "al actualizar no crea otra cuenta de mantenimiento" ($r.salida -notmatch "Contrasena de mantenimiento") $r.salida
+    Check "conserva los respaldos" (Test-Path "$destino\respaldos\copia.txt")
+    Check "borra los archivos viejos del programa" (-not (Test-Path "$destino\pb_hooks\viejo.pb.js"))
+
+    $servidor = Iniciar
+    try {
+        $token = Entrar $clave
+        $libros = Invoke-RestMethod "http://127.0.0.1:$puerto/api/collections/libros/records" -Headers @{ Authorization = $token }
+        Check "conserva los datos y la cuenta de mantenimiento" ($libros.totalItems -eq 1 -and $libros.items[0].numero -eq "Tomo de prueba")
+    } finally {
+        Stop-Process -Id $servidor.Id -Force
+        Start-Sleep -Milliseconds 500
+    }
+
+    # --- Errores -----------------------------------------------------------------
+    $ajena = Join-Path $base "Carpeta ajena"
+    New-Item -ItemType Directory $ajena | Out-Null
+    Set-Content "$ajena\documento.txt" "no tocar"
+    $r = Instalar $paquete $ajena
+    Check "no instala sobre una carpeta que no es del sistema" ($r.codigo -ne 0 -and (Get-Content "$ajena\documento.txt") -eq "no tocar" -and -not (Test-Path "$ajena\pocketbase.exe")) $r.salida
+
+    $suelto = Join-Path $base "solo el instalador"
+    New-Item -ItemType Directory $suelto | Out-Null
+    Copy-Item "$paquete\instalar.ps1" $suelto
+    $r = Instalar $suelto (Join-Path $base "otro")
+    Check "avisa si se abrio sin descomprimir" ($r.codigo -ne 0 -and $r.salida -match "Extraer todo") $r.salida
+} finally {
+    Get-Process pocketbase -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$base*" } | Stop-Process -Force
+    Start-Sleep -Milliseconds 300
+    Remove-Item $base -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+if ($script:fallas) { Write-Host "`n$($script:fallas) fallas" -ForegroundColor Red; exit 1 }
+Write-Host "`nTodo bien" -ForegroundColor Green

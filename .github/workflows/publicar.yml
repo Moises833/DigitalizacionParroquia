@@ -1,0 +1,53 @@
+# Arma SistemaBautismos.zip y lo publica en Releases al subir una etiqueta v*
+# (por ejemplo: git tag v1.0.0 && git push origin v1.0.0).
+# El enlace fijo para descargar la última versión es:
+#   https://github.com/Moises833/DigitalizacionParroquia/releases/latest/download/SistemaBautismos.zip
+# "Run workflow" (manual) solo arma el zip y lo deja como artefacto, sin publicar.
+
+name: Publicar versión
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  paquete:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Pruebas de la interfaz
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+
+      - name: Armar el paquete
+        shell: powershell
+        run: ./scripts/empaquetar.ps1
+
+      - name: Guardar el zip como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: SistemaBautismos
+          path: dist/SistemaBautismos.zip
+
+      - name: Publicar en Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          Get-Content instalador/LEAME.txt -Raw | Set-Content notas.txt
+          gh release create "${{ github.ref_name }}" dist/SistemaBautismos.zip `
+            --title "Sistema de Bautismos ${{ github.ref_name }}" --notes-file notas.txt

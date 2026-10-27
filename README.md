@@ -38,6 +38,8 @@ Pruebas de la API: con el servidor recién creado (sin `pb_data`), ejecutar en o
 
 Pruebas de la interfaz (fechas en letras, recuadros): `cd web; npm test`.
 
+Prueba del instalador (instalación, actualización sin perder datos, errores), con el paquete ya armado: `powershell -ExecutionPolicy Bypass -File scripts\prueba_instalador.ps1`. No toca el Firewall, el Escritorio ni `C:\SistemaBautismos`.
+
 Para probar el teléfono en desarrollo, iniciar el servidor con `.\pocketbase.exe serve --http=0.0.0.0:8090` y abrir la interfaz compilada en el puerto 8090 (el QR apunta a ese puerto).
 
 ## Captura de páginas
@@ -106,12 +108,21 @@ El sistema se respalda solo mientras la computadora está encendida: apenas se e
 
 ## Instalar en la parroquia
 
-1. En el equipo de desarrollo: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1`
-2. Copiar `dist\SistemaBautismos.zip` al equipo de la parroquia y descomprimirlo en una ruta corta (por ejemplo `C:\SistemaBautismos`): con una ruta muy larga Windows no puede iniciar `pocketbase.exe`.
-3. Ejecutar `instalar_sistema.bat` una sola vez: crea la cuenta de mantenimiento, abre el puerto 8090 solo para la red local y crea los accesos directos.
-4. Abrir **Sistema de Bautismos** desde el Escritorio.
+No hace falta Node ni clonar el repositorio:
 
-Para **actualizar**, reemplazar todo excepto las carpetas `pb_data` (ahí están los datos y las imágenes) y `respaldos`.
+1. Descargar **[SistemaBautismos.zip](https://github.com/Moises833/DigitalizacionParroquia/releases/latest/download/SistemaBautismos.zip)** (siempre la última versión publicada).
+2. Clic derecho → *Extraer todo…*, en cualquier carpeta.
+3. Doble clic en `instalar_sistema.bat` y responder con Enter (las respuestas por defecto son las recomendadas). El instalador:
+   - copia el sistema a `C:\SistemaBautismos` (ruta corta: con rutas muy largas Windows no puede iniciar `pocketbase.exe`);
+   - crea la cuenta de mantenimiento con una contraseña generada, que muestra para anotarla;
+   - pide permiso de administrador para que el teléfono se conecte (solo red local, puerto 8090);
+   - crea el acceso directo del Escritorio, el inicio automático con Windows, y abre el sistema.
+
+Después, la carpeta descargada y el zip se pueden borrar. El zip trae un `LEAME.txt` con estos pasos.
+
+**Actualizar:** lo mismo con el zip nuevo. Si ya hay un sistema en `C:\SistemaBautismos`, lo reemplaza sin tocar `pb_data` (datos e imágenes) ni `respaldos`, y no vuelve a pedir la cuenta de mantenimiento ni el permiso del Firewall.
+
+**Publicar una versión** (desarrollo): subir una etiqueta, por ejemplo `git tag v1.0.0` y `git push origin v1.0.0`. GitHub Actions ([.github/workflows/publicar.yml](.github/workflows/publicar.yml)) corre las pruebas de la interfaz, arma el zip y lo publica en *Releases*; el enlace de arriba pasa a apuntar a esa versión. Para armarlo a mano: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1` (queda en `dist\`).
 
 ## Piloto
 
