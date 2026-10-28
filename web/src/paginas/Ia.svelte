@@ -48,13 +48,8 @@
   const probar = () => accion("Probando conexión…", async () => {
     const r = await pb.send("/api/ia/probar", { method: "POST" })
     modelos = r.modelos
-    aviso = r.modelos.length
-      ? `Conexión correcta: la clave puede usar ${r.modelos.length} modelos Gemini.`
-      : "La clave funciona, pero no tiene modelos Gemini disponibles."
-    if (r.recomendado && r.recomendado !== config.modelo.trim()) {
-      aviso += ` El modelo «${config.modelo}» ya no está disponible: se eligió «${r.recomendado}». Pulse «Guardar ajustes».`
-      config.modelo = r.recomendado
-    }
+    if (r.ok) aviso = r.mensaje
+    else throw new Error(r.mensaje)
   })
 
   const guardarAjustes = (evento) => {
@@ -132,12 +127,6 @@
         <button class="boton peligro" type="button" onclick={quitarClave} disabled={!!ocupado}>Quitar</button>
       {/if}
     </form>
-    <div class="alerta aviso-privacidad">
-      <strong>Privacidad:</strong> en el plan gratuito, Google puede usar lo que se le envía para mejorar sus
-      productos, y personas de Google pueden revisarlo. Las actas contienen datos personales (nombres de niños,
-      padres y padrinos). Antes de enviar libros completos, la parroquia debería aprobarlo o activar la
-      facturación de Google Cloud, con la que Google no usa los datos.
-    </div>
   </section>
 
   <section class="tarjeta">
@@ -178,5 +167,4 @@
   .ayuda { font-size: 0.85rem; }
   .interruptor { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 1rem; }
   .interruptor input { width: 20px; height: 20px; }
-  .aviso-privacidad { background: #fdf6e3; border-left: 4px solid #d9b45a; margin: 1rem 0 0; font-size: 0.92rem; }
 </style>

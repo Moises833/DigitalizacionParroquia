@@ -21,7 +21,8 @@ CLAVE = "clave-falsa-123"
 
 # --- Gemini simulado -------------------------------------------------------
 
-simulador = {"modo": "ok", "pedidos": []}
+# retirados: responden 404 (Google ya no los ofrece); ocupados: 503 (saturados).
+simulador = {"modo": "ok", "pedidos": [], "retirados": set(), "ocupados": set()}
 
 RESPUESTA = {
     "numero_acta": "34", "nombres": "María Fernanda", "apellidos": "López Ruiz", "sexo": "f",
@@ -54,6 +55,7 @@ class Gemini(BaseHTTPRequestHandler):
             {"name": "models/gemini-otro", "supportedGenerationMethods": ["generateContent", "countTokens"]},
             {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]},
             {"name": "models/gemini-2.5-flash-lite", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-3.5-flash", "supportedGenerationMethods": ["generateContent"]},
             {"name": "models/embedding-001", "supportedGenerationMethods": ["embedContent"]},
         ]})
 
@@ -62,6 +64,11 @@ class Gemini(BaseHTTPRequestHandler):
         simulador["pedidos"].append({"ruta": self.path, "clave": self.headers.get("x-goog-api-key"), "cuerpo": cuerpo})
         if self.headers.get("x-goog-api-key") != CLAVE:
             return self.responder(400, {"error": {"message": "API key not valid. Please pass a valid API key."}})
+        modelo = self.path.split("/models/")[1].split(":")[0]
+        if modelo in simulador["retirados"]:
+            return self.responder(404, {"error": {"message": f"This model models/{modelo} is no longer available to new users."}})
+        if modelo in simulador["ocupados"]:
+            return self.responder(503, {"error": {"message": "This model is currently experiencing high demand."}})
         modo = simulador["modo"]
         if modo == "limite":
             return self.responder(429, {"error": {"message": "Resource exhausted"}})
@@ -154,12 +161,30 @@ check("editar configuración: sin clave en la respuesta y la conserva", s == 200
 check("el uso diario no se puede falsear", b.get("uso_dia") == 0, b.get("uso_dia"))
 
 s, b = req("POST", "/ia/probar", {}, admin)
-check("probar conexión lista solo modelos Gemini de texto",
-      s == 200 and b["modelos"] == ["gemini-prueba", "gemini-otro", "gemini-2.5-flash", "gemini-2.5-flash-lite"], b)
-check("conserva el modelo configurado si sigue disponible", b.get("recomendado") == "gemini-prueba", b)
-req("PATCH", f"/collections/config_ia/records/{cfg['id']}", {"modelo": "gemini-1.0-retirado"}, admin)
+check("probar conexión lista solo modelos Gemini de texto", s == 200 and b["modelos"] == [
+    "gemini-prueba", "gemini-otro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash"], b)
+check("probar conexión consulta de verdad el modelo configurado",
+      b.get("ok") and b.get("modelo") == "gemini-prueba" and "responde" in b.get("mensaje", "")
+      and simulador["pedidos"][-1]["ruta"].startswith("/v1beta/models/gemini-prueba:generateContent"), b)
+
+
+def modelo_configurado():
+    return req("GET", "/collections/config_ia/records", token=sec)[1]["items"][0]["modelo"]
+
+
+# Como pasó con gemini-2.5-flash: Google lo lista, pero a claves nuevas responde 404.
+simulador["retirados"] = {"gemini-prueba"}
+simulador["ocupados"] = {"gemini-3.5-flash"}
 s, b = req("POST", "/ia/probar", {}, admin)
-check("si el modelo fue retirado recomienda el flash estable", b.get("recomendado") == "gemini-2.5-flash", b)
+check("modelo retirado y el más nuevo saturado: se cambia solo al siguiente flash que responde",
+      b.get("ok") and b.get("modelo") == "gemini-2.5-flash" and "se cambió" in b.get("mensaje", "")
+      and modelo_configurado() == "gemini-2.5-flash", b)
+simulador["retirados"] = set()
+simulador["ocupados"] = {"gemini-2.5-flash", "gemini-3.5-flash"}
+s, b = req("POST", "/ia/probar", {}, admin)
+check("todos saturados: lo informa y no cambia el modelo",
+      s == 200 and not b.get("ok") and "saturado" in b.get("mensaje", "") and modelo_configurado() == "gemini-2.5-flash", b)
+simulador["ocupados"] = set()
 req("PATCH", f"/collections/config_ia/records/{cfg['id']}", {"modelo": "gemini-prueba"}, admin)
 s, _ = req("POST", "/ia/probar", {}, sec)
 check("probar conexión: solo administrador", s == 403, s)
@@ -270,6 +295,21 @@ req("PATCH", f"/collections/config_ia/records/{cfg_id}", {"por_dia": 200}, admin
 s, b = req("POST", "/ia/procesar", {}, admin)
 check("con cupo vuelve a procesar", b["procesados"] == 1, b)
 
+# Modelo saturado o retirado: prueba otros flash; si ninguno responde, espera sin gastar intentos.
+s, t3 = encolar(3)
+simulador["ocupados"] = {"gemini-prueba", "gemini-3.5-flash", "gemini-2.5-flash"}
+s, b = req("POST", "/ia/procesar", {}, admin)
+t = req("GET", f"/collections/trabajos_ia/records/{t3['id']}", token=sec)[1]
+check("todos saturados: vuelve a pendiente sin contar intento",
+      b["procesados"] == 0 and "saturado" in b["motivo"] and t["estado"] == "pendiente" and t["intentos"] == 0, (b, t))
+simulador["ocupados"] = set()
+simulador["retirados"] = {"gemini-prueba"}
+s, b = req("POST", "/ia/procesar", {}, admin)
+t = req("GET", f"/collections/trabajos_ia/records/{t3['id']}", token=sec)[1]
+check("modelo retirado: lee con el flash más nuevo y se queda con él",
+      b["procesados"] == 1 and t["modelo"] == "gemini-3.5-flash" and modelo_configurado() == "gemini-3.5-flash", (b, t))
+simulador["retirados"] = set()
+
 s, b = req("POST", "/ia/clave", {"api_key": ""}, admin)
 estado = req("GET", "/ia/estado", token=sec)[1]
 check("quitar la clave", s == 200 and b["clave_fin"] == "" and not estado["configurada"], (b, estado))
@@ -300,7 +340,7 @@ try:
     subprocess.run([os.path.join(servidor_dir, "pocketbase.exe"), "migrate", "up", *opciones],
                    cwd=servidor_dir, capture_output=True, check=True)
     codigo, salida = configurar(CLAVE)
-    check("configurar-ia: guarda la clave, elige el modelo y activa", codigo == 0 and "activada con el modelo gemini-2.5-flash" in salida, salida)
+    check("configurar-ia: guarda la clave, elige el modelo y activa", codigo == 0 and "activada con el modelo gemini-3.5-flash" in salida, salida)
     check("configurar-ia: no muestra la clave", CLAVE not in salida, salida)
     codigo, salida = configurar("clave-equivocada-999")
     check("configurar-ia: una clave rechazada no se activa", codigo == 2 and "no funciona" in salida, salida)

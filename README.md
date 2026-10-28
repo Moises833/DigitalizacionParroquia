@@ -64,14 +64,14 @@ Estados de la página: *Sin separar* → *Por transcribir* → *Completa* (todas
 
 La IA (Google Gemini) lee cada acta recortada y propone los datos; **una persona siempre los revisa** antes de guardarlos. Es opcional: sin ella todo se transcribe a mano igual.
 
-1. **Configurar (administrador):** en *Inteligencia artificial*, pegar una clave de Gemini (gratis en aistudio.google.com con una cuenta de Google de la parroquia), pulsar *Probar conexión*, elegir un modelo «flash» y activar la IA. La clave queda solo en el servidor y nunca se muestra.
+1. **Configurar (administrador):** en *Inteligencia artificial*, pegar una clave de Gemini (gratis en aistudio.google.com con una cuenta de Google de la parroquia), pulsar *Probar conexión* (hace una consulta real y, si el modelo no responde, elige otro «flash») y activar la IA. La clave queda solo en el servidor y nunca se muestra.
 2. **Enviar:** en la página separada, *Leer con IA* manda las actas que falten; en *Actas*, *Leer con IA las páginas separadas* manda el libro entero.
 3. **Cola:** el servidor envía unas pocas por minuto (8 por defecto, con un máximo diario) mientras haya internet. Si Google avisa que se llegó al límite, espera y sigue solo; tras 3 errores un acta queda marcada y se puede reintentar.
 4. **Revisar:** al abrir el acta, el formulario ya viene lleno. En amarillo lo leído por la IA; en rojo lo que no leyó con seguridad. Las fechas se vuelven a calcular desde el texto que leyó la IA, y se marcan si no coinciden con su conversión. Al guardar, el acta queda como de origen «ia» y se conserva lo que propuso la IA.
 
 **Privacidad:** en el plan gratuito, Google puede usar lo enviado para mejorar sus productos y personas de Google pueden revisarlo. Las actas tienen datos personales: la parroquia lo autorizó para el piloto. Si más adelante se prefiere que Google no use los datos, se activa la facturación de Google Cloud en la misma cuenta, sin cambiar la clave.
 
-Si Google retira el modelo configurado, *Probar conexión* lo detecta y elige el «flash» estable más nuevo que ofrezca la clave.
+Google retira modelos (a veces los sigue listando, pero responde 404 a claves nuevas: pasó con `gemini-2.5-flash`) y los más nuevos suelen estar saturados (503). Si el modelo configurado no responde por eso, la cola y *Probar conexión* prueban los demás «flash» estables, del más nuevo al más viejo, y se quedan con el primero que responde. Si todos están saturados, el acta espera en la cola sin gastar intentos.
 
 Para cambiar de proveedor de IA más adelante basta con reemplazar `pedirGemini()` en `servidor/pb_hooks/ia.js`.
 

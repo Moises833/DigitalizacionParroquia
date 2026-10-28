@@ -94,14 +94,15 @@ routerAdd("POST", "/api/ia/procesar", (e) => {
   return e.json(200, require(`${__hooks}/ia.js`).procesarCola(e.app, 50000))
 }, $apis.requireAuth("users"))
 
-// Comprueba la clave y devuelve los modelos disponibles para ella.
+// Comprueba la clave y el modelo (si no responde, cambia solo a otro) y
+// devuelve los modelos disponibles: { modelos, ok, modelo, mensaje }.
 routerAdd("POST", "/api/ia/probar", (e) => {
   if (e.auth?.getString("rol") !== "admin") throw new ForbiddenError("Solo el administrador.")
   const ia = require(`${__hooks}/ia.js`)
   const cfg = ia.config(e.app)
   if (!cfg.getString("api_key")) throw new BadRequestError("Primero guarde la clave de Gemini.")
   const modelos = ia.listarModelos(cfg)
-  return e.json(200, { modelos, recomendado: require(`${__hooks}/modelos.js`).modeloAUsar(cfg.getString("modelo"), modelos) })
+  return e.json(200, { modelos, ...ia.probarConexion(e.app) })
 }, $apis.requireAuth("users"))
 
 // Para el instalador: pocketbase configurar-ia (la clave va en la variable de

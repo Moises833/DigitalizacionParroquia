@@ -1,6 +1,8 @@
 // Elección del modelo de Gemini entre los que ofrece la clave. Google retira
-// modelos viejos: si el configurado ya no está, se usa el «flash» estable más
-// nuevo (sin «lite», «preview» ni versiones experimentales).
+// modelos viejos (a veces los sigue listando pero responde 404 a claves nuevas)
+// y los más nuevos suelen estar saturados: se prefiere el «flash» estable más
+// nuevo (sin «lite», «preview» ni versiones experimentales) y, si no responde,
+// los anteriores.
 // JavaScript puro: lo usan ia.js (con require) y las pruebas de web/ (con Node).
 
 function version(nombre) {
@@ -8,15 +10,16 @@ function version(nombre) {
   return m ? parseFloat(m[1]) : 0
 }
 
+const masNuevoPrimero = (lista) => lista.slice().sort((a, b) => version(b) - version(a))
+
+/** Los «flash» estables, del más nuevo al más viejo, sin los `descartados`. */
+function alternativas(modelos, descartados = []) {
+  return masNuevoPrimero(modelos.filter((m) => /^gemini-\d+(\.\d+)?-flash$/.test(m) && !descartados.includes(m)))
+}
+
 function modeloRecomendado(modelos) {
-  const estables = modelos.filter((m) => /^gemini-\d+(\.\d+)?-flash$/.test(m))
-  const candidatos = estables.length ? estables : modelos.filter((m) => /^gemini-.*flash/.test(m) && !/lite/.test(m))
-  return candidatos.slice().sort((a, b) => version(b) - version(a))[0] || ""
+  return alternativas(modelos)[0] ||
+    masNuevoPrimero(modelos.filter((m) => /^gemini-.*flash/.test(m) && !/lite/.test(m)))[0] || ""
 }
 
-/** El modelo a usar: el configurado si sigue disponible, si no el recomendado. */
-function modeloAUsar(actual, modelos) {
-  return modelos.includes(actual) ? actual : modeloRecomendado(modelos) || actual
-}
-
-module.exports = { modeloRecomendado, modeloAUsar }
+module.exports = { modeloRecomendado, alternativas }

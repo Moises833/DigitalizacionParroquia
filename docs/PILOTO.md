@@ -49,7 +49,7 @@ Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el 
 5. **Parroquia:** completar los datos y cargar membrete, sello y firma.
 6. **Usuarios:** crear la cuenta de la secretaría (rol *Secretaría*).
 7. **Respaldos:** en *Carpeta*, poner la ruta del disco externo (por ejemplo `E:\Respaldos Bautismos`), *Guardar*, *Probar* y *Respaldar ahora*. Si se aprobó la nube, cargar sus datos y *Probar*.
-8. **Inteligencia artificial:** la clave se crea con la cuenta de Google de la parroquia en https://aistudio.google.com/apikey (*Create API key*). Si se pegó en el instalador, en *Inteligencia artificial* ya figura activada: pulsar *Probar conexión* para confirmarlo. Si no, pegarla ahí → *Guardar clave* → *Probar conexión* (si el modelo configurado ya no existe, elige otro «flash») → marcar *IA activada* → *Guardar ajustes*. Anotar en la hoja de datos qué cuenta se usó; la clave no hace falta anotarla (se puede crear otra).
+8. **Inteligencia artificial:** la clave se crea con la cuenta de Google de la parroquia en https://aistudio.google.com/apikey (*Create API key*). Si se pegó en el instalador, en *Inteligencia artificial* ya figura activada: pulsar *Probar conexión* para confirmarlo. Si no, pegarla ahí → *Guardar clave* → *Probar conexión* (si el modelo configurado no responde, cambia solo a otro «flash») → marcar *IA activada* → *Guardar ajustes*. Anotar en la hoja de datos qué cuenta se usó; la clave no hace falta anotarla (se puede crear otra).
 9. **Libros:** registrar el libro del piloto (número o nombre como figura en el lomo, y años).
 
 ## 5. Día 1: capacitación con la secretaría (1 a 2 horas)
@@ -105,7 +105,7 @@ Con eso se decide si se sigue con los demás libros, qué ajustar antes, y si co
 | Se cortó la luz | Lo guardado está a salvo. Al encender, el sistema arranca solo y el respaldo se pone al día. |
 | Se olvidó la contraseña de la secretaría | El administrador la cambia en *Usuarios*. |
 | Se olvidó la del administrador | Con la cuenta de mantenimiento, en `http://127.0.0.1:8090/_/`. |
-| La IA no devuelve nada | *Inteligencia artificial* → *Estado*. Sin internet, espera y sigue sola. Si se llegó al límite diario del plan gratis, sigue al día siguiente. Si dice que la clave no sirve, crear otra en aistudio.google.com y *Probar conexión*. Mientras tanto se puede transcribir a mano. |
+| La IA no devuelve nada | *Inteligencia artificial* → *Estado*. Sin internet, espera y sigue sola. Si se llegó al límite diario del plan gratis, sigue al día siguiente. Si dice «saturado», es Google: reintenta sola. Si dice que la clave no sirve, crear otra en aistudio.google.com y *Probar conexión*. Mientras tanto se puede transcribir a mano. |
 | Inicio avisa que no hay respaldo | *Respaldos*: revisar el error (disco desconectado, sin internet) y *Respaldar ahora*. |
 
 ## 10. Hoja de datos de la instalación

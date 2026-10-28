@@ -120,23 +120,22 @@ function mensajeGemini(res) {
   }
 }
 
+const modeloConfigurado = (cfg) => cfg.getString("modelo").trim() || "gemini-2.5-flash"
+
 /**
- * Devuelve { ok, datos } o { ok: false, mensaje, tipo } con tipo:
- * "limite" (esperar y reintentar), "clave" (configuración inválida) o "fallo".
+ * Un pedido a Gemini. Devuelve { ok, json } o { ok: false, mensaje, tipo } con tipo:
+ * "limite" (esperar y reintentar), "clave" (configuración inválida),
+ * "modelo" (no disponible para esta clave), "ocupado" (saturado) o "fallo".
  */
-function pedirGemini(cfg, bytes, mime) {
-  const modelo = cfg.getString("modelo") || "gemini-2.5-flash"
+function consultar(cfg, modelo, partes, generationConfig, timeout) {
   let res
   try {
     res = $http.send({
       url: `${urlBase()}/v1beta/models/${encodeURIComponent(modelo)}:generateContent`,
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": cfg.getString("api_key") },
-      timeout: 120,
-      body: JSON.stringify({
-        contents: [{ role: "user", parts: [{ text: INSTRUCCIONES }, { inline_data: { mime_type: mime, data: base64(bytes) } }] }],
-        generationConfig: { temperature: 0, responseMimeType: "application/json", responseSchema: ESQUEMA },
-      }),
+      timeout,
+      body: JSON.stringify({ contents: [{ role: "user", parts: partes }], generationConfig }),
     })
   } catch (err) {
     return { ok: false, tipo: "fallo", mensaje: `Sin conexión con Gemini: ${err}` }
@@ -150,18 +149,74 @@ function pedirGemini(cfg, bytes, mime) {
     return { ok: false, tipo: "clave", mensaje: `Gemini rechazó la clave: ${mensajeGemini(res)}` }
   }
   if (res.statusCode === 404) {
-    return { ok: false, tipo: "clave", mensaje: `El modelo "${modelo}" no está disponible. Elija otro en Inteligencia artificial.` }
+    return { ok: false, tipo: "modelo", mensaje: `El modelo "${modelo}" no está disponible para esta clave.` }
+  }
+  if ([502, 503, 504].includes(res.statusCode)) {
+    return { ok: false, tipo: "ocupado", mensaje: `Gemini está saturado (modelo "${modelo}"); se reintentará más tarde.` }
   }
   if (res.statusCode !== 200) return { ok: false, tipo: "fallo", mensaje: `Gemini respondió ${res.statusCode}: ${mensajeGemini(res)}` }
+  return { ok: true, json: res.json }
+}
 
-  const candidato = res.json?.candidates?.[0]
-  const bloqueo = res.json?.promptFeedback?.blockReason
+// Lee un acta: { ok, modelo, datos } o el error de consultar().
+function pedirGemini(cfg, bytes, mime, modelo) {
+  const r = consultar(cfg, modelo, [{ text: INSTRUCCIONES }, { inline_data: { mime_type: mime, data: base64(bytes) } }],
+    { temperature: 0, responseMimeType: "application/json", responseSchema: ESQUEMA }, 120)
+  if (!r.ok) return r
+  const candidato = r.json?.candidates?.[0]
+  const bloqueo = r.json?.promptFeedback?.blockReason
   if (!candidato || bloqueo) return { ok: false, tipo: "fallo", mensaje: `Gemini no devolvió respuesta (${bloqueo || "sin candidatos"}).` }
   const salida = (candidato.content?.parts || []).map((p) => p.text || "").join("")
   try {
     return { ok: true, modelo, datos: normalizarResultado(JSON.parse(salida)) }
   } catch {
     return { ok: false, tipo: "fallo", mensaje: `Respuesta de Gemini ilegible (${candidato.finishReason || "?"}).` }
+  }
+}
+
+/**
+ * Hace `intentar(modelo)` con el modelo configurado; si ese modelo no está
+ * disponible o está saturado, prueba los demás «flash» estables (son pocos).
+ * Devuelve la respuesta, con `cambio` (el modelo que respondió) si no fue el
+ * configurado. Si ninguno responde y alguno estaba saturado, avisa eso: se
+ * resuelve solo al reintentar.
+ */
+function conRespaldo(cfg, intentar) {
+  const actual = modeloConfigurado(cfg)
+  let r = intentar(actual)
+  if (r.ok || (r.tipo !== "modelo" && r.tipo !== "ocupado")) return r
+  const lista = pedirModelos(cfg)
+  if (!lista.ok) return r
+  for (const otro of require(`${__hooks}/modelos.js`).alternativas(lista.modelos, [actual])) {
+    const r2 = intentar(otro)
+    if (r2.ok) return { ...r2, cambio: otro }
+    if (r2.tipo !== "modelo" && r2.tipo !== "ocupado") return r2
+    if (r2.tipo === "ocupado") r = r2
+  }
+  return r
+}
+
+/**
+ * «Probar conexión»: un pedido mínimo con el modelo configurado. Si no responde,
+ * se cambia solo a otro que sí. Devuelve { ok, modelo, mensaje }.
+ */
+function probarConexion(app) {
+  const cfg = config(app)
+  const anterior = modeloConfigurado(cfg)
+  const r = conRespaldo(cfg, (modelo) => consultar(cfg, modelo, [{ text: "Responde solo: ok" }], { temperature: 0 }, 60))
+  if (r.cambio) {
+    cfg.set("modelo", r.cambio)
+    cfg.set("ultimo_error", "")
+    app.save(cfg)
+  }
+  const modelo = modeloConfigurado(cfg)
+  if (!r.ok) return { ok: false, modelo, mensaje: r.mensaje }
+  return {
+    ok: true,
+    modelo,
+    mensaje: r.cambio
+      ? `Conexión correcta. El modelo «${anterior}» no respondía; se cambió a «${modelo}».`
+      : `Conexión correcta: el modelo «${modelo}» responde.`,
   }
 }
 
@@ -203,7 +258,7 @@ function configurarClave(app, clave) {
   cfg.set("api_key", clave)
   const r = pedirModelos(cfg)
   if (!r.ok && !r.sinConexion) return { ok: false, mensaje: `La clave no funciona (${r.mensaje}). Se puede cargar después en Inteligencia artificial.` }
-  if (r.ok) cfg.set("modelo", require(`${__hooks}/modelos.js`).modeloAUsar(cfg.getString("modelo"), r.modelos))
+  if (r.ok) cfg.set("modelo", require(`${__hooks}/modelos.js`).modeloRecomendado(r.modelos) || cfg.getString("modelo"))
   cfg.set("clave_fin", clave.slice(-4))
   cfg.set("ultimo_error", "")
   cfg.set("activo", true)
@@ -283,11 +338,15 @@ function procesarCola(app, presupuestoMs) {
 
     let respuesta
     try {
-      respuesta = pedirGemini(cfg, leerImagen(app, trabajo), mimeDe(trabajo.getString("imagen")))
+      const imagen = leerImagen(app, trabajo)
+      const mime = mimeDe(trabajo.getString("imagen"))
+      respuesta = conRespaldo(cfg, (modelo) => pedirGemini(cfg, imagen, mime, modelo))
     } catch (err) {
       respuesta = { ok: false, tipo: "fallo", mensaje: String(err) }
     }
     contarUso(app, cfg)
+    // Se queda con el que respondió: el configurado ya no existe o está saturado.
+    if (respuesta.cambio) cfg.set("modelo", respuesta.cambio)
 
     if (respuesta.ok) {
       trabajo.set("estado", "listo")
@@ -298,7 +357,7 @@ function procesarCola(app, presupuestoMs) {
       cfg.set("ultimo_error", "")
       app.save(cfg)
       resumen.procesados++
-    } else if (respuesta.tipo === "limite" || respuesta.tipo === "clave") {
+    } else if (["limite", "clave", "modelo", "ocupado"].includes(respuesta.tipo)) {
       // No es culpa del recorte: vuelve a la cola sin contar el intento.
       trabajo.set("estado", "pendiente")
       app.save(trabajo)
@@ -331,4 +390,4 @@ function reiniciarTrabajo(record, usuarioId) {
   record.set("creado_por", usuarioId ?? "")
 }
 
-module.exports = { procesarCola, listarModelos, configurarClave, normalizarResultado, reiniciarTrabajo, base64, config }
+module.exports = { procesarCola, listarModelos, probarConexion, configurarClave, normalizarResultado, reiniciarTrabajo, base64, config }
