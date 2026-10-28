@@ -165,18 +165,55 @@ function pedirGemini(cfg, bytes, mime) {
   }
 }
 
-function listarModelos(cfg) {
-  const res = $http.send({
-    url: `${urlBase()}/v1beta/models?pageSize=200`,
-    method: "GET",
-    headers: { "x-goog-api-key": cfg.getString("api_key") },
-    timeout: 30,
-  })
-  if (res.statusCode !== 200) throw new BadRequestError(`Gemini respondió ${res.statusCode}: ${mensajeGemini(res)}`)
-  return (res.json?.models || [])
+// { ok: true, modelos } o { ok: false, sinConexion, mensaje }
+function pedirModelos(cfg) {
+  let res
+  try {
+    res = $http.send({
+      url: `${urlBase()}/v1beta/models?pageSize=200`,
+      method: "GET",
+      headers: { "x-goog-api-key": cfg.getString("api_key") },
+      timeout: 30,
+    })
+  } catch (err) {
+    return { ok: false, sinConexion: true, mensaje: `Sin conexión con Gemini: ${err}` }
+  }
+  if (res.statusCode !== 200) return { ok: false, mensaje: `Gemini respondió ${res.statusCode}: ${mensajeGemini(res)}` }
+  const modelos = (res.json?.models || [])
     .filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
     .map((m) => String(m.name).replace(/^models\//, ""))
     .filter((n) => /gemini/i.test(n))
+  return { ok: true, modelos }
+}
+
+function listarModelos(cfg) {
+  const r = pedirModelos(cfg)
+  if (!r.ok) throw new BadRequestError(r.mensaje)
+  return r.modelos
+}
+
+/**
+ * Guarda la clave, la comprueba, elige el modelo y activa la IA. Lo usa el
+ * instalador ("pocketbase configurar-ia"). Una clave rechazada no se guarda;
+ * sin internet se guarda y se activa igual: la cola reintenta sola.
+ * Devuelve { ok, mensaje }.
+ */
+function configurarClave(app, clave) {
+  const cfg = config(app)
+  cfg.set("api_key", clave)
+  const r = pedirModelos(cfg)
+  if (!r.ok && !r.sinConexion) return { ok: false, mensaje: `La clave no funciona (${r.mensaje}). Se puede cargar después en Inteligencia artificial.` }
+  if (r.ok) cfg.set("modelo", require(`${__hooks}/modelos.js`).modeloAUsar(cfg.getString("modelo"), r.modelos))
+  cfg.set("clave_fin", clave.slice(-4))
+  cfg.set("ultimo_error", "")
+  cfg.set("activo", true)
+  app.save(cfg)
+  return {
+    ok: true,
+    mensaje: r.ok
+      ? `IA activada con el modelo ${cfg.getString("modelo")}.`
+      : "Clave guardada e IA activada, pero no se pudo comprobar (sin internet). Revise en Inteligencia artificial cuando haya conexión.",
+  }
 }
 
 // --- Cola -----------------------------------------------------------------
@@ -294,4 +331,4 @@ function reiniciarTrabajo(record, usuarioId) {
   record.set("creado_por", usuarioId ?? "")
 }
 
-module.exports = { procesarCola, listarModelos, normalizarResultado, reiniciarTrabajo, base64, config }
+module.exports = { procesarCola, listarModelos, configurarClave, normalizarResultado, reiniciarTrabajo, base64, config }

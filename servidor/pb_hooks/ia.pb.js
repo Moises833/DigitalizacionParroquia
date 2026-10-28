@@ -100,8 +100,26 @@ routerAdd("POST", "/api/ia/probar", (e) => {
   const ia = require(`${__hooks}/ia.js`)
   const cfg = ia.config(e.app)
   if (!cfg.getString("api_key")) throw new BadRequestError("Primero guarde la clave de Gemini.")
-  return e.json(200, { modelos: ia.listarModelos(cfg) })
+  const modelos = ia.listarModelos(cfg)
+  return e.json(200, { modelos, recomendado: require(`${__hooks}/modelos.js`).modeloAUsar(cfg.getString("modelo"), modelos) })
 }, $apis.requireAuth("users"))
+
+// Para el instalador: pocketbase configurar-ia (la clave va en la variable de
+// entorno IA_CLAVE_NUEVA, así no queda en la lista de procesos).
+$app.rootCmd.addCommand(new Command({
+  use: "configurar-ia",
+  short: "Guarda la clave de Gemini de IA_CLAVE_NUEVA, elige el modelo y activa la IA",
+  run: () => {
+    const clave = String($os.getenv("IA_CLAVE_NUEVA") || "").trim()
+    if (!clave || clave.length > 300) {
+      console.error("Falta la clave en IA_CLAVE_NUEVA.")
+      $os.exit(1)
+    }
+    const r = require(`${__hooks}/ia.js`).configurarClave($app, clave)
+    console.log(r.mensaje)
+    if (!r.ok) $os.exit(2)
+  },
+}))
 
 // Reintentar todos los trabajos con error.
 routerAdd("POST", "/api/ia/reintentar", (e) => {

@@ -42,13 +42,14 @@ Conviene llevar estas decisiones resueltas (o resolverlas el primer día con el 
 3. Doble clic en `instalar_sistema.bat` y responder con **Enter** a todo. Si Windows avisa «Windows protegió su PC»: *Más información* → *Ejecutar de todas formas*.
    - Copia el sistema a `C:\SistemaBautismos`.
    - Crea la **cuenta de mantenimiento** y muestra su contraseña: anotarla en la hoja del final y guardarla fuera de la PC. Es para soporte técnico, no para el uso diario.
+   - Pide la **clave de Gemini**: tenerla creada antes (paso 8) y pegarla con clic derecho; se ve con asteriscos. El instalador la prueba, elige el modelo y deja la IA activada. Con Enter se omite y se carga después.
    - Pide permiso de administrador de Windows para abrir el puerto 8090 solo a la red local (para el teléfono): responder **Sí**.
-   - Deja el sistema arrancando solo con Windows y lo abre en el navegador.
-4. La primera vez el sistema pide el nombre de la parroquia y crea el **administrador**. Después se abre con **Sistema de Bautismos** del Escritorio. La carpeta descargada y el zip se pueden borrar.
+   - Deja el sistema arrancando solo con Windows y lo abre.
+4. La primera vez el sistema pide el nombre de la parroquia y crea el **administrador**. Después se abre con **Sistema de Bautismos** del Escritorio (ícono de libro con cruz): aparece en su propia ventana, como un programa, y no hay ninguna ventana negra que cuidar. La carpeta descargada y el zip se pueden borrar.
 5. **Parroquia:** completar los datos y cargar membrete, sello y firma.
 6. **Usuarios:** crear la cuenta de la secretaría (rol *Secretaría*).
 7. **Respaldos:** en *Carpeta*, poner la ruta del disco externo (por ejemplo `E:\Respaldos Bautismos`), *Guardar*, *Probar* y *Respaldar ahora*. Si se aprobó la nube, cargar sus datos y *Probar*.
-8. **Inteligencia artificial:** con la cuenta de Google de la parroquia, entrar a https://aistudio.google.com/apikey y crear una clave (*Create API key*). En el sistema: pegarla en *Clave de Gemini* → *Guardar clave* → *Probar conexión*. Si el modelo configurado ya no existe, el sistema elige otro «flash»: pulsar *Guardar ajustes*. Marcar *IA activada* y *Guardar ajustes*. Anotar en la hoja de datos qué cuenta se usó; la clave no hace falta anotarla (se puede crear otra).
+8. **Inteligencia artificial:** la clave se crea con la cuenta de Google de la parroquia en https://aistudio.google.com/apikey (*Create API key*). Si se pegó en el instalador, en *Inteligencia artificial* ya figura activada: pulsar *Probar conexión* para confirmarlo. Si no, pegarla ahí → *Guardar clave* → *Probar conexión* (si el modelo configurado ya no existe, elige otro «flash») → marcar *IA activada* → *Guardar ajustes*. Anotar en la hoja de datos qué cuenta se usó; la clave no hace falta anotarla (se puede crear otra).
 9. **Libros:** registrar el libro del piloto (número o nombre como figura en el lomo, y años).
 
 ## 5. Día 1: capacitación con la secretaría (1 a 2 horas)
@@ -76,10 +77,9 @@ Hacerlo con el libro real, siguiendo la guía del menú **Ayuda**, y dejar que e
 
 Probar que el respaldo sirve, sin riesgo para los datos:
 
-1. Cerrar la ventana «Sistema de Bautismos».
-2. Ejecutar `restaurar_respaldo.bat`, elegir la carpeta del disco externo y la copia más reciente, y escribir `SI`.
-3. Abrir el sistema y comprobar que estén las últimas actas cargadas.
-4. Los datos anteriores quedaron en `C:\SistemaBautismos\pb_data_antes_<fecha>`. Si todo está bien, esa carpeta se puede borrar días después.
+1. En `C:\SistemaBautismos`, ejecutar `restaurar_respaldo.bat` (cierra el sistema solo), elegir la carpeta del disco externo y la copia más reciente, y escribir `SI`.
+2. Abrir el sistema y comprobar que estén las últimas actas cargadas.
+3. Los datos anteriores quedaron en `C:\SistemaBautismos\pb_data_antes_<fecha>`. Si todo está bien, esa carpeta se puede borrar días después.
 
 Si hay nube, repetir eligiendo la nube (la descarga puede tardar).
 
@@ -98,7 +98,8 @@ Con eso se decide si se sigue con los demás libros, qué ajustar antes, y si co
 
 | Qué pasa | Qué hacer |
 |---|---|
-| El sistema no abre en el navegador | Abrir «Sistema de Bautismos» del Escritorio. Si la ventana negra muestra un error, sacarle una foto. |
+| El sistema no abre | Abrir «Sistema de Bautismos» del Escritorio. Si aparece un aviso con un error, sacarle una foto. Para ver más detalle (soporte): `iniciar_sistema.bat` en `C:\SistemaBautismos` muestra el servidor en una ventana. |
+| La pantalla dice «No hay conexión con el servidor» | Pulsar *Reintentar*; si sigue, cerrar esa ventana y abrir «Sistema de Bautismos» del Escritorio, que lo vuelve a iniciar. |
 | El teléfono no se conecta | Misma red wifi que la PC; volver a generar el QR. Si sigue, el firewall: repetir `instalar_sistema.bat` aceptando el permiso de administrador. |
 | Aparece un error al guardar | Anotarlo con «Anotar un problema» (dice en qué pantalla estaba) y sacar una foto de la pantalla. Lo ya guardado no se pierde. |
 | Se cortó la luz | Lo guardado está a salvo. Al encender, el sistema arranca solo y el respaldo se pone al día. |

@@ -9,12 +9,17 @@ Requisitos: Windows 10 u 11 de 64 bits. No hace falta instalar nada más.
    Si Windows avisa "Windows protegió su PC": "Más información" -> "Ejecutar de todas formas".
 4. Responder con Enter a todo (las respuestas por defecto son las recomendadas).
    - Se genera la contraseña de mantenimiento: anotarla y guardarla fuera de la PC.
+   - Pide la clave de Gemini para leer las actas con IA: pegarla con clic derecho
+     (se ve con asteriscos). Se crea en https://aistudio.google.com/apikey con la
+     cuenta de Google de la parroquia. Con Enter se omite y se carga después.
    - Windows pide permiso de administrador para que el teléfono pueda conectarse: "Sí".
-5. Listo: el sistema queda en C:\SistemaBautismos y se abre en el navegador.
-   Después se abre con "Sistema de Bautismos" en el Escritorio.
+5. Listo: el sistema queda en C:\SistemaBautismos y se abre en su propia ventana.
+   Después se abre con "Sistema de Bautismos" en el Escritorio. No hay ninguna
+   ventana negra que dejar abierta: el sistema funciona solo en segundo plano.
    La carpeta descargada y el zip se pueden borrar.
 
 PARA ACTUALIZAR a una versión nueva: hacer lo mismo con el zip nuevo.
-Los datos, las imágenes y los respaldos se conservan.
+No hace falta cerrar nada. Los datos, las imágenes, los respaldos y la clave
+de Gemini se conservan.
 
 Guía completa del piloto: carpeta docs, archivo PILOTO.md.

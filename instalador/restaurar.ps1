@@ -25,13 +25,20 @@ function Salir($mensaje) {
     exit 1
 }
 
+# El servidor de esta carpeta corre oculto (abrir_sistema.ps1).
+function ProcesosDelSistema {
+    return @(Get-Process pocketbase -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.StartsWith("$Carpeta\", [StringComparison]::OrdinalIgnoreCase) })
+}
+
 Write-Host "=====================================================================" -ForegroundColor Cyan
 Write-Host "  RESTAURAR UN RESPALDO DEL SISTEMA DE BAUTISMOS" -ForegroundColor Cyan
 Write-Host "=====================================================================" -ForegroundColor Cyan
 
 if (-not (Test-Path $exe)) { Salir "No se encontro pocketbase.exe en $Carpeta" }
-if (Get-NetTCPConnection -LocalPort $Puerto -State Listen -ErrorAction SilentlyContinue) {
-    Salir "El sistema esta abierto. Cierre la ventana 'Sistema de Bautismos' y vuelva a intentar."
+$Carpeta = (Resolve-Path $Carpeta).Path.TrimEnd("\")
+if (-not (ProcesosDelSistema).Count -and (Get-NetTCPConnection -LocalPort $Puerto -State Listen -ErrorAction SilentlyContinue)) {
+    Salir "Otro programa usa el puerto $Puerto. Reinicie la PC y vuelva a intentar."
 }
 
 # 1. De donde ------------------------------------------------------------------
@@ -102,6 +109,12 @@ if (-not $Confirmar) {
 }
 
 # 3. Restaurar -------------------------------------------------------------------
+$abiertos = ProcesosDelSistema
+if ($abiertos.Count) {
+    Write-Host "Cerrando el sistema..."
+    $abiertos | Stop-Process -Force
+    $abiertos | ForEach-Object { $_.WaitForExit(10000) | Out-Null }
+}
 if (Test-Path $datos) { Rename-Item -Path $datos -NewName "pb_data_antes_$marca" }
 New-Item -ItemType Directory $datos | Out-Null
 Copy-Item $elegida.FullName (Join-Path $datos "data.db")
@@ -120,6 +133,6 @@ if (Test-Path $imagenes) {
 if ($LASTEXITCODE -ne 0) { Salir "La base restaurada no se pudo actualizar. Los datos anteriores estan en pb_data_antes_$marca." }
 
 Write-Host "`n=====================================================================" -ForegroundColor Green
-Write-Host "  Restauracion completa. Abra 'Sistema de Bautismos' en el Escritorio." -ForegroundColor Green
+Write-Host "  Restauracion completa. Abra 'Sistema de Bautismos' en el Escritorio (o reinicie la PC)." -ForegroundColor Green
 Write-Host "  Revise que esten los ultimos datos cargados antes de seguir trabajando." -ForegroundColor Green
 Write-Host "=====================================================================" -ForegroundColor Green

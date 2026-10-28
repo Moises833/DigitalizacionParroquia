@@ -25,13 +25,19 @@ function Instalar($carpeta, $dest, [switch]$Abierto) {
     return @{ codigo = $LASTEXITCODE; salida = $salida }
 }
 
+function Servidor($carpeta) {
+    return @(Get-Process pocketbase -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$carpeta\*" })
+}
+
+# Igual que el acceso directo del inicio de Windows: abrir_sistema.ps1 sin ventana.
 function Iniciar {
-    $p = Start-Process (Join-Path $destino "pocketbase.exe") -ArgumentList "serve", "--http=127.0.0.1:$puerto" `
-        -WorkingDirectory $destino -WindowStyle Hidden -PassThru
-    for ($i = 0; $i -lt 40; $i++) {
-        try { Invoke-RestMethod "http://127.0.0.1:$puerto/api/health" | Out-Null; return $p } catch { Start-Sleep -Milliseconds 250 }
-    }
-    throw "El servidor no arranco"
+    & powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$destino\abrir_sistema.ps1" -SinNavegador -Puerto $puerto
+    if ($LASTEXITCODE -ne 0) { throw "abrir_sistema.ps1 no pudo iniciar el servidor" }
+    return (Servidor $destino)[0]
+}
+
+function Detener($proceso) {
+    if ($proceso -and -not $proceso.HasExited) { Stop-Process -Id $proceso.Id -Force; $proceso.WaitForExit(5000) | Out-Null }
 }
 
 function Entrar($clave) {
@@ -60,6 +66,9 @@ try {
 
     $servidor = Iniciar
     try {
+        Check "el acceso directo inicia el sistema sin ventana" ($servidor -and $servidor.MainWindowHandle -eq 0)
+        & powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "$destino\abrir_sistema.ps1" -SinNavegador -Puerto $puerto
+        Check "abrirlo de nuevo no inicia otra copia" ((Servidor $destino).Count -eq 1)
         $token = Entrar $clave
         Check "la cuenta de mantenimiento entra con esa contrasena" ([bool]$token)
         $libro = Invoke-RestMethod "http://127.0.0.1:$puerto/api/collections/libros/records" -Method Post `
@@ -67,10 +76,23 @@ try {
             -Body (@{ numero = "Tomo de prueba"; sacramento = "bautismo" } | ConvertTo-Json)
         Check "el sistema instalado guarda datos" ([bool]$libro.id)
         $r2 = Instalar $paquete $destino
-        Check "no actualiza con el sistema abierto" ($r2.codigo -ne 0 -and $r2.salida -match "abierto") $r2.salida
+        Check "si el sistema esta abierto lo cierra solo y actualiza" ($r2.codigo -eq 0 -and $r2.salida -match "Se cerro el sistema" -and
+            (Servidor $destino).Count -eq 0) $r2.salida
     } finally {
-        Stop-Process -Id $servidor.Id -Force
-        Start-Sleep -Milliseconds 500
+        Detener $servidor
+    }
+
+    # Otro programa en el puerto (por ejemplo, una copia del sistema en otra carpeta).
+    $ajeno = Start-Process "$paquete\pocketbase.exe" -ArgumentList "serve", "--http=127.0.0.1:$puerto" `
+        -WorkingDirectory $paquete -WindowStyle Hidden -PassThru
+    Start-Sleep -Seconds 2
+    try {
+        $r2 = Instalar $paquete $destino
+        Check "avisa si otro programa usa el puerto" ($r2.codigo -ne 0 -and $r2.salida -match "Otro programa") $r2.salida
+        Check "no detiene programas de otras carpetas" (-not $ajeno.HasExited)
+    } finally {
+        Detener $ajeno
+        Remove-Item "$paquete\pb_data" -Recurse -Force -ErrorAction SilentlyContinue
     }
 
     # --- Actualizacion ---------------------------------------------------------
@@ -89,8 +111,7 @@ try {
         $libros = Invoke-RestMethod "http://127.0.0.1:$puerto/api/collections/libros/records" -Headers @{ Authorization = $token }
         Check "conserva los datos y la cuenta de mantenimiento" ($libros.totalItems -eq 1 -and $libros.items[0].numero -eq "Tomo de prueba")
     } finally {
-        Stop-Process -Id $servidor.Id -Force
-        Start-Sleep -Milliseconds 500
+        Detener $servidor
     }
 
     # --- El .bat y las preguntas ------------------------------------------------
@@ -113,8 +134,19 @@ function global:Read-Host {
     $nuevo = Join-Path $base "Con preguntas"
     $salida = & powershell -NoProfile -ExecutionPolicy Bypass -File $enter -Script "$paquete\instalar.ps1" -Destino $nuevo -Puerto $puerto 2>&1 | Out-String
     $preguntas = ([regex]::Matches($salida, "\[pregunta\]")).Count
-    Check "responder Enter a todo instala con las opciones recomendadas" ($LASTEXITCODE -eq 0 -and $preguntas -eq 3 -and
+    Check "responder Enter a todo instala con las opciones recomendadas" ($LASTEXITCODE -eq 0 -and $preguntas -eq 4 -and $salida -match "Sin clave" -and
         $salida -match "mantenimiento@parroquia.local" -and $salida -match "Contrasena de mantenimiento: \S{16}") $salida
+
+    $conIA = Join-Path $base "Con IA"
+    $env:SISTEMA_CLAVE_GEMINI = "clave-de-prueba-instalador"
+    $env:IA_URL_BASE = "http://127.0.0.1:9"   # sin conexion: no sale nada a internet
+    try {
+        $r = Instalar $paquete $conIA
+    } finally {
+        Remove-Item Env:\SISTEMA_CLAVE_GEMINI, Env:\IA_URL_BASE
+    }
+    Check "guarda la clave de Gemini y activa la IA al instalar" ($r.codigo -eq 0 -and $r.salida -match "Clave guardada e IA activada") $r.salida
+    Check "no muestra la clave de Gemini" ($r.salida -notmatch "clave-de-prueba-instalador") $r.salida
 
     # --- Errores -----------------------------------------------------------------
     $ajena = Join-Path $base "Carpeta ajena"

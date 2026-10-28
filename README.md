@@ -104,7 +104,7 @@ El sistema se respalda solo mientras la computadora está encendida: apenas se e
 
 **Qué se guarda.** Cada destino tiene `db/datos_<fecha>.db` (copia de la base, las últimas 30) y `storage/` (todas las imágenes, sin miniaturas). Las imágenes no cambian nunca, así que cada respaldo copia solo las nuevas: el primero a la nube puede tardar horas y avanza un poco cada minuto, aunque la PC se apague en el medio. La copia de la base se sube al final, cuando ya están todas sus imágenes. Del destino no se borra ninguna imagen.
 
-**Restaurar.** Cerrar el sistema y abrir `restaurar_respaldo.bat` en la carpeta del sistema. Pregunta si restaurar desde una carpeta o desde la nube (la baja primero con `pocketbase.exe descargar-respaldo`) y qué copia usar. Los datos actuales no se borran: quedan en `pb_data_antes_<fecha>`. Si la computadora se dañó, instalar el sistema en la nueva y restaurar: desde la nube pide los datos de acceso.
+**Restaurar.** Abrir `restaurar_respaldo.bat` en la carpeta del sistema (cierra el sistema solo). Pregunta si restaurar desde una carpeta o desde la nube (la baja primero con `pocketbase.exe descargar-respaldo`) y qué copia usar. Los datos actuales no se borran: quedan en `pb_data_antes_<fecha>`. Si la computadora se dañó, instalar el sistema en la nueva y restaurar: desde la nube pide los datos de acceso.
 
 ## Instalar en la parroquia
 
@@ -115,12 +115,15 @@ No hace falta Node ni clonar el repositorio:
 3. Doble clic en `instalar_sistema.bat` y responder con Enter (las respuestas por defecto son las recomendadas). El instalador:
    - copia el sistema a `C:\SistemaBautismos` (ruta corta: con rutas muy largas Windows no puede iniciar `pocketbase.exe`);
    - crea la cuenta de mantenimiento con una contraseña generada, que muestra para anotarla;
+   - pide la clave de Gemini (opcional): la prueba, elige el modelo y activa la IA (`pocketbase configurar-ia`). La clave queda solo en la base de esa PC, nunca en el repositorio ni en el zip;
    - pide permiso de administrador para que el teléfono se conecte (solo red local, puerto 8090);
    - crea el acceso directo del Escritorio, el inicio automático con Windows, y abre el sistema.
 
+**Uso diario.** El acceso directo ejecuta `abrir_sistema.ps1`: si el servidor no está corriendo lo inicia **oculto** (sin ventana negra que se pueda cerrar por error; la salida queda en `pb_data\servidor.log`) y abre el sistema en su propia ventana de Edge, como un programa (sin Edge, en el navegador predeterminado). Si el servidor no arranca, muestra un aviso con el error. Para soporte, `iniciar_sistema.bat` lo inicia con su ventana a la vista.
+
 Después, la carpeta descargada y el zip se pueden borrar. El zip trae un `LEAME.txt` con estos pasos.
 
-**Actualizar:** lo mismo con el zip nuevo. Si ya hay un sistema en `C:\SistemaBautismos`, lo reemplaza sin tocar `pb_data` (datos e imágenes) ni `respaldos`, y no vuelve a pedir la cuenta de mantenimiento ni el permiso del Firewall.
+**Actualizar:** lo mismo con el zip nuevo. Si ya hay un sistema en `C:\SistemaBautismos`, lo cierra solo, lo reemplaza sin tocar `pb_data` (datos, imágenes y configuración, incluida la clave de Gemini) ni `respaldos`, y no vuelve a pedir la cuenta de mantenimiento, la clave ni el permiso del Firewall. `restaurar_respaldo.bat` también cierra el sistema solo.
 
 **Publicar una versión** (desarrollo): subir una etiqueta, por ejemplo `git tag v1.0.0` y `git push origin v1.0.0`. GitHub Actions ([.github/workflows/publicar.yml](.github/workflows/publicar.yml)) corre las pruebas de la interfaz, arma el zip y lo publica en *Releases*; el enlace de arriba pasa a apuntar a esa versión. Para armarlo a mano: `powershell -ExecutionPolicy Bypass -File scripts\empaquetar.ps1` (queda en `dist\`).
 

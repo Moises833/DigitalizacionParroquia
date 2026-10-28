@@ -52,6 +52,8 @@ class Gemini(BaseHTTPRequestHandler):
         self.responder(200, {"models": [
             {"name": "models/gemini-prueba", "supportedGenerationMethods": ["generateContent"]},
             {"name": "models/gemini-otro", "supportedGenerationMethods": ["generateContent", "countTokens"]},
+            {"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-2.5-flash-lite", "supportedGenerationMethods": ["generateContent"]},
             {"name": "models/embedding-001", "supportedGenerationMethods": ["embedContent"]},
         ]})
 
@@ -152,7 +154,13 @@ check("editar configuración: sin clave en la respuesta y la conserva", s == 200
 check("el uso diario no se puede falsear", b.get("uso_dia") == 0, b.get("uso_dia"))
 
 s, b = req("POST", "/ia/probar", {}, admin)
-check("probar conexión lista solo modelos Gemini de texto", s == 200 and b["modelos"] == ["gemini-prueba", "gemini-otro"], b)
+check("probar conexión lista solo modelos Gemini de texto",
+      s == 200 and b["modelos"] == ["gemini-prueba", "gemini-otro", "gemini-2.5-flash", "gemini-2.5-flash-lite"], b)
+check("conserva el modelo configurado si sigue disponible", b.get("recomendado") == "gemini-prueba", b)
+req("PATCH", f"/collections/config_ia/records/{cfg['id']}", {"modelo": "gemini-1.0-retirado"}, admin)
+s, b = req("POST", "/ia/probar", {}, admin)
+check("si el modelo fue retirado recomienda el flash estable", b.get("recomendado") == "gemini-2.5-flash", b)
+req("PATCH", f"/collections/config_ia/records/{cfg['id']}", {"modelo": "gemini-prueba"}, admin)
 s, _ = req("POST", "/ia/probar", {}, sec)
 check("probar conexión: solo administrador", s == 403, s)
 
@@ -265,6 +273,43 @@ check("con cupo vuelve a procesar", b["procesados"] == 1, b)
 s, b = req("POST", "/ia/clave", {"api_key": ""}, admin)
 estado = req("GET", "/ia/estado", token=sec)[1]
 check("quitar la clave", s == 200 and b["clave_fin"] == "" and not estado["configurada"], (b, estado))
+
+# --- Clave desde el instalador: pocketbase configurar-ia ------------------------
+
+import os
+import shutil
+import subprocess
+import tempfile
+
+carpeta = tempfile.mkdtemp(prefix="prueba_configurar_ia_")
+servidor_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "servidor")
+opciones = [f"--dir={carpeta}", "--hooksDir=pb_hooks", "--migrationsDir=pb_migrations"]
+
+
+def configurar(clave, url="http://127.0.0.1:8099"):
+    entorno = {**os.environ, "IA_URL_BASE": url}
+    entorno.pop("IA_CLAVE_NUEVA", None)
+    if clave is not None:
+        entorno["IA_CLAVE_NUEVA"] = clave
+    r = subprocess.run([os.path.join(servidor_dir, "pocketbase.exe"), "configurar-ia", *opciones],
+                       cwd=servidor_dir, env=entorno, capture_output=True, text=True, encoding="utf-8")
+    return r.returncode, r.stdout + r.stderr
+
+
+try:
+    subprocess.run([os.path.join(servidor_dir, "pocketbase.exe"), "migrate", "up", *opciones],
+                   cwd=servidor_dir, capture_output=True, check=True)
+    codigo, salida = configurar(CLAVE)
+    check("configurar-ia: guarda la clave, elige el modelo y activa", codigo == 0 and "activada con el modelo gemini-2.5-flash" in salida, salida)
+    check("configurar-ia: no muestra la clave", CLAVE not in salida, salida)
+    codigo, salida = configurar("clave-equivocada-999")
+    check("configurar-ia: una clave rechazada no se activa", codigo == 2 and "no funciona" in salida, salida)
+    codigo, salida = configurar(CLAVE, "http://127.0.0.1:9")
+    check("configurar-ia: sin internet guarda la clave igual", codigo == 0 and "sin internet" in salida, salida)
+    codigo, salida = configurar(None)
+    check("configurar-ia: sin clave no hace nada", codigo == 1, salida)
+finally:
+    shutil.rmtree(carpeta, ignore_errors=True)
 
 servidor.shutdown()
 print(f"\n{'Todo bien' if not fallas else f'{fallas} fallas'}")

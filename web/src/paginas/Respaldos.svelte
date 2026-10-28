@@ -264,8 +264,7 @@
   <section class="tarjeta">
     <h2>Restaurar</h2>
     <ol>
-      <li>Cierre la ventana «Sistema de Bautismos».</li>
-      <li>En la carpeta del sistema, abra <code>restaurar_respaldo.bat</code>.</li>
+      <li>En la carpeta del sistema (<code>C:\SistemaBautismos</code>), abra <code>restaurar_respaldo.bat</code>. Cierra el sistema solo.</li>
       <li>Elija si restaura desde una carpeta (otro disco o pendrive) o desde la nube, y qué copia usar (la 1 es la más reciente).</li>
       <li>Los datos actuales no se borran: quedan en una carpeta <code>pb_data_antes_…</code>.</li>
     </ol>

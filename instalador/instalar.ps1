@@ -3,11 +3,14 @@
 #  1. Copia el sistema a C:\SistemaBautismos. Si ya estaba instalado, lo
 #     actualiza sin tocar los datos (pb_data) ni los respaldos.
 #  2. Prepara la base y, la primera vez, crea la cuenta de mantenimiento.
-#  3. Abre el puerto en el Firewall solo para la red local (para el telefono).
-#  4. Crea los accesos directos y abre el sistema.
+#  3. La primera vez, pide la clave de Gemini (opcional) y activa la IA.
+#  4. Abre el puerto en el Firewall solo para la red local (para el telefono).
+#  5. Crea los accesos directos y abre el sistema.
+# Si el sistema esta abierto lo detiene antes de copiar y lo vuelve a abrir al final.
 # Este archivo se mantiene sin acentos: PowerShell 5.1 lo leeria con otra codificacion.
 #
 # Para pruebas: instalar.ps1 -Destino C:\otra -Confirmar -SinFirewall -SinAccesos -SinAbrir
+# (la clave de Gemini se puede pasar en la variable de entorno SISTEMA_CLAVE_GEMINI).
 
 param(
     [string]$Destino = "C:\SistemaBautismos",
@@ -37,6 +40,22 @@ function Si($texto) {
     return (Preguntar "$texto (S/N, Enter = S)" "S") -match "^[sS]"
 }
 
+function TextoDe($seguro) {
+    return [Runtime.InteropServices.Marshal]::PtrToStringAuto(
+        [Runtime.InteropServices.Marshal]::SecureStringToBSTR($seguro))
+}
+
+# Detiene el servidor de esta carpeta (corre oculto). Devuelve si estaba abierto.
+function DetenerSistema($carpeta) {
+    $procesos = @(Get-Process pocketbase -ErrorAction SilentlyContinue |
+        Where-Object { $_.Path -and $_.Path.StartsWith("$carpeta\", [StringComparison]::OrdinalIgnoreCase) })
+    if ($procesos.Count) {
+        $procesos | Stop-Process -Force
+        $procesos | ForEach-Object { $_.WaitForExit(10000) | Out-Null }
+    }
+    return [bool]$procesos.Count
+}
+
 function ClaveAlAzar {
     $letras = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     $bytes = New-Object byte[] 16
@@ -62,17 +81,15 @@ $origen = (Resolve-Path $origen).Path.TrimEnd("\")
 $Destino = [IO.Path]::GetFullPath($Destino).TrimEnd("\")
 $actualizacion = Test-Path (Join-Path $Destino "pb_data\data.db")
 
-Write-Host "`n[1/4] Copiando el sistema a $Destino..."
+Write-Host "`n[1/5] Copiando el sistema a $Destino..."
 if ($origen -ne $Destino) {
     if ((Test-Path $Destino) -and (Get-ChildItem $Destino -Force | Select-Object -First 1) -and
         -not (Test-Path (Join-Path $Destino "pocketbase.exe"))) {
         Salir "La carpeta $Destino ya existe y no es del sistema. Muevala o cambiele el nombre y vuelva a intentar."
     }
-    while (Get-NetTCPConnection -LocalPort $Puerto -State Listen -ErrorAction SilentlyContinue) {
-        if ($Confirmar) { Salir "El sistema esta abierto. Cierre la ventana 'Sistema de Bautismos' y vuelva a intentar." }
-        Write-Host "  El sistema esta abierto. Cierre la ventana 'Sistema de Bautismos' (puede estar minimizada" -ForegroundColor Yellow
-        Write-Host "  en la barra de tareas) y presione Enter." -ForegroundColor Yellow
-        Read-Host | Out-Null
+    if (DetenerSistema $Destino) { Write-Host "  Se cerro el sistema para actualizarlo." }
+    if (Get-NetTCPConnection -LocalPort $Puerto -State Listen -ErrorAction SilentlyContinue) {
+        Salir "Otro programa usa el puerto $Puerto (puede ser una copia del sistema en otra carpeta). Reinicie la PC y vuelva a intentar."
     }
     New-Item -ItemType Directory -Force $Destino | Out-Null
     # /MIR deja la carpeta igual a la nueva version (borra archivos viejos del
@@ -95,7 +112,7 @@ Set-Location $Destino
 $exe = Join-Path $Destino "pocketbase.exe"
 
 # 2. Base de datos y cuenta de mantenimiento ----------------------------------
-Write-Host "`n[2/4] Preparando la base de datos..."
+Write-Host "`n[2/5] Preparando la base de datos..."
 & $exe migrate up | Out-Null
 if ($LASTEXITCODE -ne 0) { Salir "No se pudo preparar la base de datos." }
 
@@ -106,9 +123,7 @@ if ($actualizacion) {
     $correo = Preguntar "  Correo (Enter = mantenimiento@parroquia.local)" "mantenimiento@parroquia.local"
     $claveTexto = ""
     if (-not $Confirmar) {
-        $clave = Read-Host "  Contrasena (minimo 10 caracteres; Enter = generar una)" -AsSecureString
-        $claveTexto = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($clave))
+        $claveTexto = TextoDe (Read-Host "  Contrasena (minimo 10 caracteres; Enter = generar una)" -AsSecureString)
     }
     $generada = -not $claveTexto
     if ($generada) { $claveTexto = ClaveAlAzar }
@@ -124,8 +139,41 @@ if ($actualizacion) {
     $claveTexto = $null
 }
 
-# 3. Firewall (requiere permisos de administrador) ---------------------------
-Write-Host "`n[3/4] Permitiendo la conexion del telefono (red local)..."
+# 3. Inteligencia artificial (opcional) ---------------------------------------
+Write-Host "`n[3/5] Lectura de actas con inteligencia artificial (Gemini)..."
+if ($actualizacion) {
+    Write-Host "  Se conserva la configuracion de la IA." -ForegroundColor Green
+} else {
+    $claveIA = [string]$env:SISTEMA_CLAVE_GEMINI
+    if (-not $claveIA -and -not $Confirmar) {
+        Write-Host "  Pegue la clave de Gemini (clic derecho para pegar; se ve con asteriscos)."
+        Write-Host "  Se crea en https://aistudio.google.com/apikey con la cuenta de Google de la parroquia."
+        $claveIA = TextoDe (Read-Host "  Clave de Gemini (Enter = cargarla despues desde el sistema)" -AsSecureString)
+    }
+    $claveIA = $claveIA.Trim()
+    if (-not $claveIA) {
+        Write-Host "  Sin clave: se puede cargar despues en el menu 'Inteligencia artificial'."
+    } else {
+        $env:IA_CLAVE_NUEVA = $claveIA
+        $codificacion = [Console]::OutputEncoding
+        try {
+            [Console]::OutputEncoding = [Text.Encoding]::UTF8   # el mensaje trae acentos
+            # --dev=false: nunca mostrar las consultas (llevan la clave), este donde este instalado.
+            $lineas = @(& $exe configurar-ia --dev=false 2>&1 | ForEach-Object { "$_" } | Where-Object { $_.Trim() })
+        } finally {
+            [Console]::OutputEncoding = $codificacion
+        }
+        $codigo = $LASTEXITCODE
+        Remove-Item Env:\IA_CLAVE_NUEVA
+        $resultado = if ($lineas.Count) { $lineas[-1] -replace "^\d{4}/\d\d/\d\d \d\d:\d\d:\d\d ", "" } else { "" }
+        $claveIA = $null
+        $color = if ($codigo -eq 0) { "Green" } else { "Yellow" }
+        Write-Host "  $resultado" -ForegroundColor $color
+    }
+}
+
+# 4. Firewall (requiere permisos de administrador) ---------------------------
+Write-Host "`n[4/5] Permitiendo la conexion del telefono (red local)..."
 $regla = "Sistema de Bautismos (puerto $Puerto)"
 if ($SinFirewall) {
     Write-Host "  Omitido."
@@ -143,28 +191,33 @@ if ($SinFirewall) {
     }
 }
 
-# 4. Accesos directos ---------------------------------------------------------
-Write-Host "`n[4/4] Creando accesos directos..."
-$bat = Join-Path $Destino "iniciar_sistema.bat"
+# 5. Accesos directos ---------------------------------------------------------
+# Abren abrir_sistema.ps1 sin ventana: el servidor queda oculto y el sistema se
+# abre en su propia ventana.
+Write-Host "`n[5/5] Creando accesos directos..."
+$powershell = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
+$abrir = Join-Path $Destino "abrir_sistema.ps1"
+$argumentos = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$abrir`""
+function AccesoDirecto($ruta, $extra) {
+    $acceso = (New-Object -ComObject WScript.Shell).CreateShortcut($ruta)
+    $acceso.TargetPath = $powershell
+    $acceso.Arguments = "$argumentos $extra".Trim()
+    $acceso.WorkingDirectory = $Destino
+    $acceso.IconLocation = Join-Path $Destino "sistema.ico"
+    $acceso.WindowStyle = 7  # minimizado: casi no se ve la consola al abrir
+    $acceso.Description = "Sistema de Bautismos"
+    $acceso.Save()
+}
 if ($SinAccesos) {
     Write-Host "  Omitido."
 } else {
-    $shell = New-Object -ComObject WScript.Shell
-    $escritorio = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "Sistema de Bautismos.lnk"))
-    $escritorio.TargetPath = $bat
-    $escritorio.WorkingDirectory = $Destino
-    $escritorio.Save()
+    AccesoDirecto (Join-Path ([Environment]::GetFolderPath("Desktop")) "Sistema de Bautismos.lnk") ""
     Write-Host "  'Sistema de Bautismos' en el Escritorio." -ForegroundColor Green
 
     $rutaInicio = Join-Path ([Environment]::GetFolderPath("Startup")) "Servidor de Bautismos.lnk"
     if ((Test-Path $rutaInicio) -or (Si "  Iniciar el sistema automaticamente al encender la PC?")) {
-        $inicio = $shell.CreateShortcut($rutaInicio)
-        $inicio.TargetPath = $bat
-        $inicio.Arguments = "/sinnavegador"
-        $inicio.WorkingDirectory = $Destino
-        $inicio.WindowStyle = 7  # minimizado
-        $inicio.Save()
-        Write-Host "  El sistema se iniciara con Windows." -ForegroundColor Green
+        AccesoDirecto $rutaInicio "-SinNavegador"
+        Write-Host "  El sistema se iniciara con Windows, sin ventanas." -ForegroundColor Green
     }
 }
 
@@ -181,5 +234,5 @@ if ($origen -ne $Destino) {
 Write-Host "=====================================================================" -ForegroundColor Cyan
 
 if (-not $SinAbrir -and (Si "`nAbrir el sistema ahora?")) {
-    Start-Process -FilePath $bat -WorkingDirectory $Destino
+    Start-Process $powershell -ArgumentList $argumentos -WorkingDirectory $Destino -WindowStyle Hidden
 }

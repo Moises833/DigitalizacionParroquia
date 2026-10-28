@@ -2,7 +2,6 @@
   import { onMount } from "svelte"
   import { pb, mensajeError } from "../lib/pb.js"
   import { estadoIA } from "../lib/ia.js"
-  import { modeloRecomendado } from "../lib/modelos.js"
 
   let config = $state(null)
   let estado = $state(null)
@@ -52,10 +51,9 @@
     aviso = r.modelos.length
       ? `Conexión correcta: la clave puede usar ${r.modelos.length} modelos Gemini.`
       : "La clave funciona, pero no tiene modelos Gemini disponibles."
-    const sugerido = modeloRecomendado(r.modelos)
-    if (r.modelos.length && !r.modelos.includes(config.modelo.trim()) && sugerido) {
-      aviso += ` El modelo «${config.modelo}» ya no está disponible: se eligió «${sugerido}». Pulse «Guardar ajustes».`
-      config.modelo = sugerido
+    if (r.recomendado && r.recomendado !== config.modelo.trim()) {
+      aviso += ` El modelo «${config.modelo}» ya no está disponible: se eligió «${r.recomendado}». Pulse «Guardar ajustes».`
+      config.modelo = r.recomendado
     }
   })
 
