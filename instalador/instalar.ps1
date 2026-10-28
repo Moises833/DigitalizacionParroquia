@@ -36,7 +36,8 @@ function Preguntar($texto, $porDefecto) {
     if ($r) { return $r } else { return $porDefecto }
 }
 
-function Si($texto) {
+# No llamarla "Si": "si" es un alias de Set-Item y los alias ganan a las funciones.
+function Confirma($texto) {
     return (Preguntar "$texto (S/N, Enter = S)" "S") -match "^[sS]"
 }
 
@@ -215,7 +216,7 @@ if ($SinAccesos) {
     Write-Host "  'Sistema de Bautismos' en el Escritorio." -ForegroundColor Green
 
     $rutaInicio = Join-Path ([Environment]::GetFolderPath("Startup")) "Servidor de Bautismos.lnk"
-    if ((Test-Path $rutaInicio) -or (Si "  Iniciar el sistema automaticamente al encender la PC?")) {
+    if ((Test-Path $rutaInicio) -or (Confirma "  Iniciar el sistema automaticamente al encender la PC?")) {
         AccesoDirecto $rutaInicio "-SinNavegador"
         Write-Host "  El sistema se iniciara con Windows, sin ventanas." -ForegroundColor Green
     }
@@ -233,6 +234,6 @@ if ($origen -ne $Destino) {
 }
 Write-Host "=====================================================================" -ForegroundColor Cyan
 
-if (-not $SinAbrir -and (Si "`nAbrir el sistema ahora?")) {
+if (-not $SinAbrir -and (Confirma "`nAbrir el sistema ahora?")) {
     Start-Process $powershell -ArgumentList $argumentos -WorkingDirectory $Destino -WindowStyle Hidden
 }

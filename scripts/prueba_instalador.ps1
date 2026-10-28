@@ -46,6 +46,16 @@ function Entrar($clave) {
         -Method Post -ContentType "application/json" -Body $cuerpo).token
 }
 
+# Una funcion con el nombre de un alias nunca corre: PowerShell ejecuta el alias
+# ("si" es Set-Item). Las preguntas del final no se prueban instalando (tocarian
+# el Escritorio y abririan el sistema), asi que se revisa aca.
+foreach ($archivo in "instalar.ps1", "restaurar.ps1", "abrir_sistema.ps1") {
+    $arbol = [Management.Automation.Language.Parser]::ParseFile((Join-Path $raiz "instalador\$archivo"), [ref]$null, [ref]$null)
+    $choques = @($arbol.FindAll({ $args[0] -is [Management.Automation.Language.FunctionDefinitionAst] }, $true) |
+        Where-Object { Get-Alias $_.Name -ErrorAction SilentlyContinue } | ForEach-Object { $_.Name })
+    Check "$archivo no tiene funciones con nombre de alias de PowerShell" (-not $choques.Count) ($choques -join ", ")
+}
+
 try {
     Expand-Archive $zip -DestinationPath $descarga
     $paquete = Join-Path $descarga "SistemaBautismos"
