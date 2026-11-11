@@ -71,10 +71,88 @@ Write-Host "====================================================================
 if (-not [Environment]::Is64BitOperatingSystem) {
     Salir "Este equipo es de 32 bits. El sistema requiere Windows de 64 bits."
 }
+
+$tempExtraccion = $null
+
+# Verificacion y recuperacion de componentes
 if (-not (Test-Path (Join-Path $origen "pocketbase.exe"))) {
-    Salir ("Faltan archivos del sistema. Seguramente se abrio el instalador sin descomprimir el zip.`n" +
+    # 1. Comprobar si se ejecuto dentro del repositorio (carpeta instalador/)
+    $raiz = Split-Path $origen -Parent
+    if ((Test-Path (Join-Path $raiz "servidor\pocketbase.exe")) -and (Test-Path (Join-Path $raiz "servidor\pb_public\index.html"))) {
+        Write-Host "  Preparando archivos desde la carpeta del repositorio..." -ForegroundColor Cyan
+        $tempExtraccion = Join-Path ([IO.Path]::GetTempPath()) ("SistemaBautismos_pkg_" + [guid]::NewGuid().ToString("N"))
+        New-Item -ItemType Directory -Force $tempExtraccion | Out-Null
+        Copy-Item (Join-Path $raiz "servidor\pocketbase.exe") $tempExtraccion
+        foreach ($dir in "pb_migrations", "pb_hooks", "pb_public") {
+            Copy-Item (Join-Path $raiz "servidor\$dir") (Join-Path $tempExtraccion $dir) -Recurse -Force
+        }
+        Copy-Item (Join-Path $raiz "instalador\*") $tempExtraccion -Force
+        if (Test-Path (Join-Path $raiz "docs")) {
+            Copy-Item (Join-Path $raiz "docs") (Join-Path $tempExtraccion "docs") -Recurse -Force
+        }
+        $origen = $tempExtraccion
+    }
+    # 2. Si es instalacion interactiva (usuario normal, no test con -Confirmar): buscar o descargar SistemaBautismos.zip
+    elseif (-not $Confirmar) {
+        Write-Host "  No se encontro pocketbase.exe en esta carpeta." -ForegroundColor Yellow
+        Write-Host "  Buscando paquete precompilado 'SistemaBautismos.zip'..." -ForegroundColor Cyan
+
+        $candidatos = @(
+            (Join-Path $origen "SistemaBautismos.zip"),
+            (Join-Path (Split-Path $origen -Parent) "SistemaBautismos.zip"),
+            (Join-Path ([Environment]::GetFolderPath('UserProfile')) "Downloads\SistemaBautismos.zip"),
+            (Join-Path ([Environment]::GetFolderPath('UserProfile')) "Documents\SistemaBautismos.zip"),
+            (Join-Path ([Environment]::GetFolderPath('MyDocuments')) "SistemaBautismos.zip")
+        )
+
+        $zipEncontrado = $null
+        foreach ($cand in $candidatos) {
+            if ((Test-Path $cand) -and ((Get-Item $cand).Length -gt 5000000)) {
+                $zipEncontrado = $cand
+                break
+            }
+        }
+
+        if (-not $zipEncontrado) {
+            Write-Host "  Descargando automaticamente la version precompilada oficial desde GitHub..." -ForegroundColor Cyan
+            $urlRelease = "https://github.com/Moises833/DigitalizacionParroquia/releases/latest/download/SistemaBautismos.zip"
+            $zipDescarga = Join-Path ([IO.Path]::GetTempPath()) "SistemaBautismos_descargado.zip"
+            try {
+                if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
+                    & curl.exe -L $urlRelease -o $zipDescarga --silent --show-error
+                } else {
+                    Invoke-WebRequest $urlRelease -OutFile $zipDescarga -UseBasicParsing
+                }
+                if ((Test-Path $zipDescarga) -and ((Get-Item $zipDescarga).Length -gt 5000000)) {
+                    $zipEncontrado = $zipDescarga
+                }
+            } catch {
+                # Fallo de conexion
+            }
+        }
+
+        if ($zipEncontrado) {
+            Write-Host "  Extrayendo componentes oficiales de $(Split-Path $zipEncontrado -Leaf)..." -ForegroundColor Green
+            $tempExtraccion = Join-Path ([IO.Path]::GetTempPath()) ("SistemaBautismos_zip_" + [guid]::NewGuid().ToString("N"))
+            Expand-Archive -Path $zipEncontrado -DestinationPath $tempExtraccion -Force
+            $carpetaConExe = $tempExtraccion
+            if (Test-Path (Join-Path $tempExtraccion "SistemaBautismos\pocketbase.exe")) {
+                $carpetaConExe = Join-Path $tempExtraccion "SistemaBautismos"
+            }
+            if (Test-Path (Join-Path $carpetaConExe "pocketbase.exe")) {
+                $origen = $carpetaConExe
+            }
+        }
+    }
+}
+
+if (-not (Test-Path (Join-Path $origen "pocketbase.exe"))) {
+    Salir ("Faltan archivos del sistema. Seguramente se abrio el instalador sin descomprimir el zip o se descargo solo el codigo fuente.`n" +
            "    Cierre esta ventana, haga clic derecho sobre SistemaBautismos.zip -> 'Extraer todo...'`n" +
-           "    y abra instalar_sistema.bat desde la carpeta que se crea.")
+           "    y abra instalar_sistema.bat desde la carpeta que se crea.`n`n" +
+           "    Si descargo 'DigitalizacionParroquia-main.zip' desde el boton 'Code' de GitHub, ese archivo solo trae el codigo fuente.`n" +
+           "    Descargue el paquete de instalacion completo desde:`n" +
+           "    https://github.com/Moises833/DigitalizacionParroquia/releases/latest/download/SistemaBautismos.zip")
 }
 
 # 1. Copiar a la carpeta definitiva ---------------------------------------------
@@ -99,8 +177,8 @@ if ($origen -ne $Destino) {
     if ($LASTEXITCODE -ge 8) { Salir "No se pudieron copiar los archivos a $Destino (codigo $LASTEXITCODE)." }
     # Los archivos vienen de un zip descargado: se desbloquean para que Windows
     # no pregunte cada vez que se abre el sistema.
-    Get-ChildItem -LiteralPath $origen -Recurse -File | ForEach-Object {
-        Unblock-File -LiteralPath (Join-Path $Destino $_.FullName.Substring($origen.Length)) -ErrorAction SilentlyContinue
+    Get-ChildItem -LiteralPath $Destino -Recurse -File | ForEach-Object {
+        Unblock-File -LiteralPath $_.FullName -ErrorAction SilentlyContinue
     }
 }
 if ($actualizacion) {
@@ -220,6 +298,11 @@ if ($SinAccesos) {
         AccesoDirecto $rutaInicio "-SinNavegador"
         Write-Host "  El sistema se iniciara con Windows, sin ventanas." -ForegroundColor Green
     }
+}
+
+# Limpiar carpeta temporal si se utilizo
+if ($tempExtraccion -and (Test-Path $tempExtraccion)) {
+    Remove-Item $tempExtraccion -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host "`n=====================================================================" -ForegroundColor Cyan
